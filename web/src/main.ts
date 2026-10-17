@@ -292,7 +292,11 @@ setupCard({
   specials: () => state.specials,
   states: () => state.states,
   siteUrl: SITE_URL,
-  onCardMade: () => {},
+  // Counted as an event in GoatCounter (no cookies); measures the cards target.
+  onCardMade: (cityId, homeState) => {
+    const counter = (window as { goatcounter?: { count: (v: object) => void } }).goatcounter;
+    counter?.count({ path: `card/${cityId}/${homeState}`, title: 'Card made', event: true });
+  },
 });
 
 start();

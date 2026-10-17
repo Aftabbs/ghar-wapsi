@@ -6,3 +6,4 @@ node_modules/
 dist/
 web/shots/
 web/test-results/
+web/playwright-report/

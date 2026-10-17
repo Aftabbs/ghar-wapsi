@@ -81,7 +81,8 @@ def main() -> int:
         "specials": specials_report,
         "files": files,
     }
-    REPORT.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    # Bytes, not text mode: on Windows text mode would write CRLF line endings.
+    REPORT.write_bytes((json.dumps(report, indent=2, ensure_ascii=False) + "\n").encode("utf-8"))
     print(json.dumps(report, indent=2, ensure_ascii=False))
     return 0
 

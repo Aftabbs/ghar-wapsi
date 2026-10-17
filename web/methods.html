@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>How this was made · Ghar Wapsi</title>
+    <meta name="description" content="Sources, repairs and limits behind the Ghar Wapsi train map." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%230b1020'/><circle cx='16' cy='16' r='5' fill='%23ffb347'/></svg>" />
+    <link rel="stylesheet" href="/src/methods.css" />
+  </head>
+  <body>
+    <main class="doc">
+      <p><a href="./">← Back to the map</a></p>
+      <h1>How this was made</h1>
+      <p class="lede">
+        Every number on the map and on the cards comes from one of four public sources below.
+        Where a source is old or incomplete, the map says so instead of filling the gap.
+      </p>
+
+      <h2>Sources</h2>
+      <table>
+        <thead>
+          <tr><th scope="col">What</th><th scope="col">Source</th><th scope="col">Licence</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Regular trains and their stops</td>
+            <td><a href="https://github.com/datameet/railways">DataMeet Indian Railways timetable</a>, collected in 2016</td>
+            <td>CC0</td>
+          </tr>
+          <tr>
+            <td>Stations opened or moved since 2016</td>
+            <td><a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> stations with an Indian Railways code</td>
+            <td>ODbL, © OpenStreetMap contributors</td>
+          </tr>
+          <tr>
+            <td>2026 festival specials</td>
+            <td>Press releases on official zonal railway websites (<code>*.indianrailways.gov.in</code>), one link per train</td>
+            <td>Public notices</td>
+          </tr>
+          <tr>
+            <td>Who lives where</td>
+            <td>Census of India 2011, Table D-02: migrants by place of last residence</td>
+            <td>Government of India</td>
+          </tr>
+          <tr>
+            <td>Map boundaries</td>
+            <td>Survey of India boundary and Census 2011 districts, via <a href="https://github.com/datameet/maps">DataMeet maps</a></td>
+            <td>MIT</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>What the night map shows</h2>
+      <ul>
+        <li>Each light is one train from the 2016 timetable, moving between its scheduled stops. One clock day plays in 60 seconds.</li>
+        <li><strong>The timetable is from 2016.</strong> Some trains no longer run and newer ones are missing. It shows how dense the network is, not today's exact schedule.</li>
+        <li><strong>Weekly trains are shown as if they ran daily</strong>, because the timetable does not record running days.</li>
+        <li>Trains travel in straight lines between stops, not along the real track.</li>
+      </ul>
+
+      <h2>How the timetable was repaired</h2>
+      <p>The 2016 data has gaps and copying errors. Each repair is counted, and the counts are published in
+        <a href="https://github.com/Aftabbs/ghar-wapsi/blob/main/pipeline/report.json">report.json</a>.</p>
+      <ul>
+        <li>5,184 of 5,208 trains survive; 24 had too few usable stops.</li>
+        <li>22,561 stops had no day recorded; the day was worked out from when the clock passes midnight.</li>
+        <li>640 rows were duplicates created when the original scrape copied a station as a train reversed out of a terminus. They were removed.</li>
+        <li>674 stops implied a speed above 400 km/h, which means a misplaced station, and were skipped.</li>
+        <li>962 stations missing from the 2016 list (including SMVT Bengaluru) were added from OpenStreetMap. Where the two sources disagreed by more than 25 km, the location that matches the station's neighbouring stops was kept.</li>
+      </ul>
+
+      <h2>Festival specials</h2>
+      <ul>
+        <li>Only trains announced on an official railway website are included, and each links to its notice. Trains seen only on news or booking sites are left out, so the real number is higher.</li>
+        <li>A special counts as "heading home" when it leaves a big work hub (Delhi, Mumbai, Bengaluru, Hyderabad, Chennai, Gujarat, Punjab, Haryana, Kerala) for a state people travel home to.</li>
+        <li>Specials with published times move on the map. Those without times are drawn as faint routes and never animated, so no timing is implied that the notice does not give.</li>
+        <li>The list was last checked on <strong>17 October 2026</strong> and is updated until Chhath.</li>
+      </ul>
+
+      <h2>The card</h2>
+      <ul>
+        <li><strong>Distance</strong> is a straight line between the city and the centre of the home district.</li>
+        <li><strong>Fastest direct train</strong> is from the 2016 timetable. If the district has no direct train, the card names the nearest district within 60 km that does. Otherwise it says there is none. Journeys with a change are not counted.</li>
+        <li><strong>Specials</strong> counts verified festival specials from the city to the home state.</li>
+        <li><strong>People</strong> is the Census 2011 count of people living in the city whose previous home was in that state. It covers every reason for moving (work, marriage, study, family) and every length of stay. It is not a count of festival travellers.</li>
+        <li>Telangana did not exist in 2011, so its districts appear under Andhra Pradesh.</li>
+      </ul>
+
+      <h2>Privacy</h2>
+      <p>The site has no accounts and stores nothing about you. Visits are counted with
+        <a href="https://www.goatcounter.com/">GoatCounter</a>, which uses no cookies. Your card is made in your browser and is not uploaded anywhere.</p>
+
+      <h2>Found a mistake?</h2>
+      <p><a href="https://github.com/Aftabbs/ghar-wapsi/issues">Open an issue on GitHub</a> with the train number or district and the source that shows the right value.</p>
+    </main>
+  </body>
+</html>
