@@ -1,84 +1,84 @@
 {
   "routes": {
     "bengaluru": {
-      "direct": 260,
-      "nearest_served": 100
+      "direct": 167,
+      "nearest_served": 117
     },
     "delhi": {
-      "direct": 403,
-      "nearest_served": 72
+      "direct": 302,
+      "nearest_served": 131
     },
     "mumbai": {
-      "direct": 357,
-      "nearest_served": 81
+      "direct": 256,
+      "nearest_served": 117
     },
     "hyderabad": {
-      "direct": 240,
-      "nearest_served": 85
-    },
-    "chennai": {
-      "direct": 283,
-      "nearest_served": 108
-    },
-    "kolkata": {
-      "direct": 140,
-      "nearest_served": 67
-    },
-    "pune": {
-      "direct": 252,
-      "nearest_served": 81
-    },
-    "ahmedabad": {
-      "direct": 332,
-      "nearest_served": 98
-    },
-    "surat": {
-      "direct": 305,
-      "nearest_served": 79
-    },
-    "jaipur": {
-      "direct": 293,
-      "nearest_served": 86
-    },
-    "ludhiana": {
-      "direct": 309,
-      "nearest_served": 91
-    },
-    "chandigarh": {
-      "direct": 191,
-      "nearest_served": 99
-    },
-    "gurugram": {
       "direct": 111,
-      "nearest_served": 60
-    },
-    "noida": {
-      "direct": 314,
-      "nearest_served": 79
-    },
-    "kochi": {
-      "direct": 295,
-      "nearest_served": 104
-    },
-    "coimbatore": {
-      "direct": 245,
-      "nearest_served": 104
-    },
-    "nagpur": {
-      "direct": 287,
-      "nearest_served": 96
-    },
-    "indore": {
-      "direct": 167,
       "nearest_served": 68
     },
+    "chennai": {
+      "direct": 176,
+      "nearest_served": 141
+    },
+    "kolkata": {
+      "direct": 82,
+      "nearest_served": 80
+    },
+    "pune": {
+      "direct": 170,
+      "nearest_served": 103
+    },
+    "ahmedabad": {
+      "direct": 209,
+      "nearest_served": 119
+    },
+    "surat": {
+      "direct": 199,
+      "nearest_served": 113
+    },
+    "jaipur": {
+      "direct": 163,
+      "nearest_served": 117
+    },
+    "ludhiana": {
+      "direct": 176,
+      "nearest_served": 129
+    },
+    "chandigarh": {
+      "direct": 46,
+      "nearest_served": 83
+    },
+    "gurugram": {
+      "direct": 78,
+      "nearest_served": 80
+    },
+    "noida": {
+      "direct": 0,
+      "nearest_served": 0
+    },
+    "kochi": {
+      "direct": 127,
+      "nearest_served": 74
+    },
+    "coimbatore": {
+      "direct": 99,
+      "nearest_served": 54
+    },
+    "nagpur": {
+      "direct": 164,
+      "nearest_served": 116
+    },
+    "indore": {
+      "direct": 98,
+      "nearest_served": 99
+    },
     "visakhapatnam": {
-      "direct": 229,
-      "nearest_served": 87
+      "direct": 137,
+      "nearest_served": 99
     },
     "guwahati": {
-      "direct": 247,
-      "nearest_served": 100
+      "direct": 132,
+      "nearest_served": 125
     },
     "districts": 641
   },
@@ -159,15 +159,33 @@
     "outside_india_districts": 1
   },
   "trains": {
-    "stops_without_coordinates": 1876,
-    "points_dropped_too_fast": 674,
-    "stops_day_inferred": 22561,
-    "stops_dropped_out_of_order": 640,
-    "trains_dropped_too_few_points": 24,
-    "trains_in": 5208,
-    "trains_out": 5184,
-    "long_distance_trains": 1647,
-    "points_out": 482284
+    "timetable": "Trains at a Glance 2026",
+    "tables": 486,
+    "columns_merged_by_extraction": 104,
+    "spare_column_times_ambiguous": 73,
+    "tables_without_trains": 20,
+    "tables_without_station_column": 1,
+    "trains_dropped_implausible_speed": 411,
+    "trains_dropped_segments_do_not_join": 437,
+    "stops_matched_by_location": 3888,
+    "stops_unmatched_no_anchor": 486,
+    "trains_dropped_too_few_matched_stops": 92,
+    "trains_dropped_times_out_of_order": 10,
+    "stops_dropped_out_of_order": 267,
+    "stops_unmatched_name": 324,
+    "stops_unmatched_far": 57,
+    "trains_found": 3576,
+    "trains_out": 2626,
+    "points_respaced": 2,
+    "long_distance_trains": 1465,
+    "points_out": 42408,
+    "crosscheck_vs_2016": {
+      "compared": 596,
+      "median_ratio": 0.995,
+      "p5_ratio": 0.884,
+      "p95_ratio": 1.106,
+      "share_within_25pct": 0.978
+    }
   },
   "specials": {
     "rows_in": 113,
@@ -178,22 +196,22 @@
   "files": [
     {
       "file": "trains-long.bin",
-      "trips": 3670,
-      "points": 155814,
-      "bytes": 956944,
-      "time_base": -64
+      "trips": 3115,
+      "points": 35855,
+      "bytes": 233862,
+      "time_base": -411
     },
     {
       "file": "trains-rest.bin",
-      "trips": 3910,
-      "points": 50948,
-      "bytes": 329188,
-      "time_base": 1129
+      "trips": 1444,
+      "points": 9583,
+      "bytes": 66202,
+      "time_base": 914
     },
     {
       "file": "india-states.json",
       "states": 36,
-      "bytes": 246748
+      "bytes": 246746
     },
     {
       "file": "migration-2011.json",
@@ -203,13 +221,17 @@
       "interstate_total": 54264749
     },
     {
+      "file": "rail-travel-2023.json",
+      "bytes": 14408
+    },
+    {
       "file": "specials-2026.json",
       "specials": 113,
       "bytes": 52035
     },
     {
       "file": "routes.json",
-      "bytes": 182232
+      "bytes": 146566
     }
   ]
 }

@@ -14,10 +14,14 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.fixture(scope="module")
 def built():
-    gazetteer, station_report = stations.build(RAW)
-    located = {s.code: (s.lon, s.lat) for s in gazetteer}
-    trips, train_report = trains.build(RAW, located)
-    return {s.code: s for s in gazetteer}, {t.number: t for t in trips}, train_report
+    from ghar import tag
+
+    gazetteer, _ = stations.build(RAW)
+    rows = [{"code": s.code, "name": s.name, "lon": s.lon, "lat": s.lat} for s in gazetteer]
+    index = tag.station_index(RAW / "tag2026" / "Station_Code_Index.pdf")
+    parsed, report = tag.parse(RAW / "tag2026" / "tables.json", index, rows)
+    trips, _ = trains.from_tag(parsed, {s.code: (s.lon, s.lat) for s in gazetteer})
+    return {s.code: s for s in gazetteer}, {t.number: t for t in trips}, report
 
 
 def test_new_bengaluru_terminal_is_on_the_map(built):
@@ -34,22 +38,25 @@ def test_disputed_station_keeps_the_location_its_neighbours_confirm(built):
 
 
 @pytest.mark.parametrize(
-    ("number", "low_h", "high_h"),
+    ("number", "origin", "destination", "low_h", "high_h"),
     [
-        ("12295", 44, 52),  # Sanghamitra, Bengaluru -> Patna
-        ("12301", 16, 18),  # Howrah Rajdhani
-        ("12951", 15, 17),  # Mumbai Rajdhani
-        ("12627", 37, 41),  # Karnataka Express
+        ("12295", "SMVB", "DNR", 44, 50),  # Sanghamitra, Bengaluru -> Patna (Danapur)
+        ("12301", "HWH", "NDLS", 16, 18),  # Howrah Rajdhani
+        ("12627", "SBC", "NDLS", 36, 40),  # Karnataka Express
+        ("12578", "MYS", "DBG", 50, 56),  # Bagmati Express, Mysuru -> Darbhanga
     ],
 )
-def test_known_journey_times(built, number, low_h, high_h):
+def test_known_2026_journeys(built, number, origin, destination, low_h, high_h):
     _, trips, _ = built
-    assert low_h <= trips[number].span / 60 <= high_h
+    trip = trips[number]
+    assert (trip.origin, trip.destination) == (origin, destination)
+    assert low_h <= trip.span / 60 <= high_h
 
 
-def test_almost_every_train_survives_repair(built):
+def test_most_timetable_trains_are_read(built):
     _, _, report = built
-    assert report["trains_out"] / report["trains_in"] > 0.98
+    assert report["trains_out"] >= 2500
+    assert report["trains_out"] / report["trains_found"] > 0.7
 
 
 def test_census_flows_match_published_tables():

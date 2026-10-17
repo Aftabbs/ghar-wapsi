@@ -1,35 +1,6 @@
 from collections import Counter
 
-from ghar.trains import DAY, WINDOW, Trip, _stop_times, _strictly_increasing, loop_copies
-
-
-def row(code, arrival, departure, day=1):
-    return {"station_code": code, "arrival": arrival, "departure": departure, "day": day}
-
-
-def test_midnight_crossing_adds_a_day():
-    rows = [row("A", "None", "23:30:00"), row("B", "00:20:00", "00:25:00", day=None)]
-    stops = _stop_times(rows, Counter())
-    assert stops == [("A", None, 23 * 60 + 30), ("B", DAY + 20, DAY + 25)]
-
-
-def test_dwell_across_midnight_within_one_stop():
-    stops = _stop_times([row("A", "23:55:00", "00:05:00")], Counter())
-    assert stops == [("A", 23 * 60 + 55, DAY + 5)]
-
-
-def test_repeated_row_after_reversal_is_dropped():
-    # The 2016 scrape repeats BBQ after MAS when the train reverses out of Chennai.
-    rows = [
-        row("BBQ", "15:03:00", "15:03:00"),
-        row("MAS", "15:05:00", "15:40:00"),
-        row("BBQ", "15:03:00", "15:03:00"),
-        row("KOK", "15:44:00", "15:44:00"),
-    ]
-    report = Counter()
-    stops = _stop_times(rows, report)
-    assert [s[0] for s in stops] == ["BBQ", "MAS", "KOK"]
-    assert report["stops_dropped_out_of_order"] == 1
+from ghar.trains import DAY, WINDOW, Trip, _strictly_increasing, loop_copies
 
 
 def test_same_minute_stops_are_spread_until_strictly_increasing():
@@ -59,3 +30,18 @@ def test_two_day_train_is_on_screen_at_every_minute_it_runs():
     copies = loop_copies(t)
     for minute in range(WINDOW[0], WINDOW[1], 15):
         assert any(c[0][2] <= minute <= c[-1][2] for c in copies)
+
+
+def test_all_caps_train_names_are_tidied_but_abbreviations_kept():
+    from ghar.trains import tidy_name
+
+    assert tidy_name("MYSORE - DARBHANGA BAGMATI SF Exp") == "Mysore - Darbhanga Bagmati SF Exp"
+    assert tidy_name("MUMBAI LTT - CHHAPRA Godan Exp") == "Mumbai LTT - Chhapra Godan Exp"
+    assert tidy_name("Howrah-New Delhi Rajdhani Express") == "Howrah-New Delhi Rajdhani Express"
+
+
+def test_hyphenated_line_breaks_are_rejoined():
+    from ghar.trains import tidy_name
+
+    assert tidy_name("New Delhi Kan- pur Shatabdi Express") == "New Delhi Kanpur Shatabdi Express"
+    assert tidy_name("Mumbai LTT - Chhapra Godan Exp") == "Mumbai LTT - Chhapra Godan Exp"

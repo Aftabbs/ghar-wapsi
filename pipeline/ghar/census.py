@@ -135,3 +135,8 @@ def write(data: dict, path: Path) -> dict:
         "districts": len(data["districts"]),
         "interstate_total": data["interstate_total"],
     }
+
+
+def write_json(data: dict, path: Path) -> dict:
+    path.write_bytes(json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+    return {"file": path.name, "bytes": path.stat().st_size}

@@ -1,6 +1,6 @@
 // The "Make your card" dialog: choose a city and a home district, preview, share.
 
-import { cardFacts, drawCard, type Migration, type RouteData } from './card';
+import { cardFacts, drawCard, type Migration, type RailTravel, type RouteData } from './card';
 import type { Special } from './festival';
 
 interface Inputs {
@@ -25,26 +25,33 @@ export function setupCard(inputs: Inputs) {
   const hint = $<HTMLParagraphElement>('#card-hint');
   const close = $<HTMLButtonElement>('#card-close');
 
-  let data: { routes: RouteData; migration: Migration; trains: Map<string, string> } | null = null;
+  let data: {
+    routes: RouteData;
+    migration: Migration;
+    travel: RailTravel;
+    trains: Map<string, string>;
+  } | null = null;
   let blob: Blob | null = null;
 
   async function load() {
     if (data) return data;
     const get = (name: string) => fetch(`${inputs.dataUrl}${name}`).then((r) => r.json());
-    const [routes, migration, meta] = await Promise.all([
+    const [routes, migration, travel, meta] = await Promise.all([
       get('routes.json'),
       get('migration-2011.json'),
+      get('rail-travel-2023.json'),
       get('trains.meta.json'),
     ]);
     data = {
       routes,
       migration,
+      travel,
       trains: new Map((meta as { n: string; name: string }[]).map((t) => [t.n, t.name])),
     };
     city.replaceChildren(
       ...Object.entries(routes.cities as RouteData['cities']).map(([id, c]) => new Option(c.name, id)),
     );
-    const states = [...new Set(Object.values(routes.districts as RouteData['districts']).map((d) => d[1]))].sort();
+    const states = [...new Set(Object.values(routes.districts as RouteData['districts']).map((d) => d[4]))].sort();
     state.replaceChildren(new Option('Choose your home state', ''), ...states.map((s) => new Option(s, s)));
     return data;
   }
@@ -52,7 +59,7 @@ export function setupCard(inputs: Inputs) {
   function fillDistricts() {
     if (!data) return;
     const options = Object.entries(data.routes.districts)
-      .filter(([, d]) => d[1] === state.value)
+      .filter(([, d]) => d[4] === state.value)
       .sort((a, b) => a[1][0].localeCompare(b[1][0]))
       .map(([code, d]) => new Option(d[0], code));
     district.replaceChildren(new Option('Choose your home district', ''), ...options);
@@ -86,7 +93,7 @@ export function setupCard(inputs: Inputs) {
     hint.textContent = share.disabled
       ? 'Download the card, or press and hold it to save.'
       : 'Share it, or download it.';
-    inputs.onCardMade(city.value, data.routes.districts[district.value][1]);
+    inputs.onCardMade(city.value, data.routes.districts[district.value][4]);
   }
 
   open.addEventListener('click', async () => {

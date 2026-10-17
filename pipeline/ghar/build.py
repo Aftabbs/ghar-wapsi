@@ -10,7 +10,19 @@ import json
 import sys
 from pathlib import Path
 
-from . import boundaries, census, pack, routes, specials, stations, trains
+from . import (
+    boundaries,
+    census,
+    crosscheck,
+    eacpm,
+    pack,
+    routes,
+    specials,
+    stations,
+    tag,
+    tag_extract,
+    trains,
+)
 from .geo import DistrictIndex
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -27,7 +39,19 @@ def main() -> int:
     stations.write(gazetteer, OUT / "stations.odbl.json")
 
     located = {s.code: (s.lon, s.lat) for s in gazetteer}
-    trips, train_report = trains.build(RAW, located)
+    # Train timings: Trains at a Glance 2026 (Railway Board), parsed from its PDFs.
+    tag_files = tag_extract.extract(tag_extract.download())
+    del tag_files  # extract() caches the cells; tag.parse reads the cache
+    index = tag.station_index(RAW / "tag2026" / "Station_Code_Index.pdf")
+    station_rows = [{"code": s.code, "name": s.name, "lon": s.lon, "lat": s.lat} for s in gazetteer]
+    tag_trains, tag_report = tag.parse(RAW / "tag2026" / "tables.json", index, station_rows)
+    trips, train_report = trains.from_tag(tag_trains, located)
+    train_report = {
+        "timetable": "Trains at a Glance 2026",
+        **tag_report,
+        **train_report,
+        "crosscheck_vs_2016": crosscheck.run(trips, RAW / "trains.json"),
+    }
     trips.sort(key=lambda t: t.number)
     train_ids = {t.number: i for i, t in enumerate(trips)}
     meta = [
@@ -52,6 +76,9 @@ def main() -> int:
         pack.pack(other_trips, train_ids, OUT / "trains-rest.bin"),
         boundaries.build(RAW, OUT / "india-states.json"),
         census.write(census.parse(RAW / "census-d02"), OUT / "migration-2011.json"),
+        census.write_json(
+            eacpm.parse(eacpm.fetch(RAW / "eacpm-2024.pdf")), OUT / "rail-travel-2023.json"
+        ),
     ]
 
     by_code = {
@@ -68,8 +95,16 @@ def main() -> int:
     route_data, route_report = routes.build(
         trips, {s.code: s.district_code for s in gazetteer}, centroids
     )
+    # name, Census 2011 state, lon, lat, state today (Telangana split from Andhra in 2014)
+    state_today = boundaries.current_state_locator(RAW)
     route_data["districts"] = {
-        str(d.census_code): [d.name, d.state, round(d.centroid[0], 3), round(d.centroid[1], 3)]
+        str(d.census_code): [
+            d.name,
+            d.state,
+            round(d.centroid[0], 3),
+            round(d.centroid[1], 3),
+            state_today(*d.centroid),
+        ]
         for d in sorted(districts, key=lambda d: (d.state, d.name))
     }
     files.append(routes.write(route_data, OUT / "routes.json"))

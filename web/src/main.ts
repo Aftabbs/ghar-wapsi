@@ -267,8 +267,8 @@ async function start() {
     const moving = activeTrips(long, state.minute);
     ui.status.textContent = reducedMotion ? 'Animation paused because reduced motion is on. Press Play to start.' : '';
     ui.summary.textContent =
-      `The map animates ${long.length.toLocaleString('en-IN')} long-distance train runs from an open 2016 ` +
-      `Indian Railways timetable across one day, compressed into 60 seconds. At 8 pm about ` +
+      `The map animates ${long.length.toLocaleString('en-IN')} long-distance train runs from Trains at a ` +
+      `Glance 2026, the official Indian Railways timetable, across one day compressed into 60 seconds. At 8 pm about ` +
       `${moving.toLocaleString('en-IN')} long-distance trains are on the move.`;
     const [rest, specials] = await Promise.all([
       loadTrips(`${DATA}trains-rest.bin`),

@@ -18,7 +18,9 @@ DATAMEET_MAPS = "https://raw.githubusercontent.com/datameet/maps/master/"
 
 SOURCES = {
     "stations.json": DATAMEET_RAILWAYS + "stations.json",
+    # Independent 2016 timetable, used only to cross-check the parsed 2026 journey times.
     "trains.json": DATAMEET_RAILWAYS + "trains.json",
+    # Used only to find each station's neighbours when resolving location disputes.
     "schedules.json": DATAMEET_RAILWAYS + "schedules.json",
     "india-soi.geojson": DATAMEET_MAPS + "Country/india-soi.geojson",
     "states.geojson": DATAMEET_MAPS + "docs/data/geojson/states.geojson",

@@ -5,11 +5,18 @@ import { isHomeward, type Special } from './festival';
 export interface RouteData {
   cities: Record<string, { name: string; districts: number[] }>;
   routes: Record<string, Record<string, [number, string] | [number, string, number]>>;
-  districts: Record<string, [string, string, number, number]>; // name, state, lon, lat
+  // name, Census 2011 state, lon, lat, state today (Telangana became a state in 2014)
+  districts: Record<string, [string, string, number, number, string]>;
 }
 
 export interface Migration {
   districts: Record<string, { name: string; state: string; from: Record<string, number> }>;
+}
+
+export interface RailTravel {
+  source: string;
+  year: number;
+  shares: Record<string, Record<string, number>>; // origin state -> destination state -> %
 }
 
 export interface TrainMeta {
@@ -25,6 +32,12 @@ export interface CardFacts {
 }
 
 const SPECIALS_AS_OF = '17 Oct 2026';
+const TIMETABLE = 'Trains at a Glance 2026';
+
+/** The name people use: official data says "NCT of Delhi". */
+function spoken(state: string): string {
+  return state === 'NCT of Delhi' ? 'Delhi' : state;
+}
 
 export function formatIndian(n: number): string {
   return Math.round(n).toLocaleString('en-IN');
@@ -41,11 +54,17 @@ function haversineKm([lon1, lat1]: [number, number], [lon2, lat2]: [number, numb
 export function cardFacts(
   cityId: string,
   homeDistrict: string,
-  data: { routes: RouteData; migration: Migration; specials: Special[]; trains: Map<string, string> },
+  data: {
+    routes: RouteData;
+    migration: Migration;
+    travel: RailTravel;
+    specials: Special[];
+    trains: Map<string, string>;
+  },
 ): CardFacts {
   const city = data.routes.cities[cityId];
-  const [homeName, homeState, homeLon, homeLat] = data.routes.districts[homeDistrict];
-  const [, cityState, cityLon, cityLat] = data.routes.districts[String(city.districts[0])];
+  const [homeName, homeState2011, homeLon, homeLat, homeState] = data.routes.districts[homeDistrict];
+  const [, cityState2011, cityLon, cityLat, cityState] = data.routes.districts[String(city.districts[0])];
   const from: [number, number] = [cityLon, cityLat];
   const to: [number, number] = [homeLon, homeLat];
   const lines: CardFacts['lines'] = [];
@@ -58,17 +77,20 @@ export function cardFacts(
     const [hours, number, via] = route;
     const name = data.trains.get(number);
     const train = name ? `${number} ${name}` : number;
-    const time = `about ${Math.round(hours)} h`;
+    const time =
+      hours < 1.5
+        ? `about ${Math.max(5, Math.round((hours * 60) / 5) * 5)} min`
+        : `about ${Math.round(hours)} h`;
     lines.push(
       via === undefined
-        ? { text: `Fastest direct train: ${train}, ${time}`, source: '2016 timetable' }
+        ? { text: `Fastest direct train: ${train}, ${time}`, source: TIMETABLE }
         : {
             text: `Nearest direct train goes to ${data.routes.districts[String(via)][0]}: ${train}, ${time}`,
-            source: '2016 timetable',
+            source: TIMETABLE,
           },
     );
   } else {
-    lines.push({ text: 'No direct train in the 2016 timetable', source: '2016 timetable' });
+    lines.push({ text: `No direct train listed in ${TIMETABLE}`, source: TIMETABLE });
   }
 
   const inCity = new Set(city.districts);
@@ -88,14 +110,24 @@ export function cardFacts(
   );
 
   if (homeState !== cityState) {
+    const share = data.travel.shares[homeState]?.[cityState];
+    if (share !== undefined && share >= 0.01) {
+      lines.push({
+        text: `In ${data.travel.year}, ${share.toFixed(1)}% of long-distance unreserved train trips from ${homeState} went to ${spoken(cityState)}`,
+        source: 'EAC-PM migration study, railway ticket data',
+      });
+    }
+  }
+  if (homeState2011 !== cityState2011) {
     const people = city.districts.reduce(
-      (sum, d) => sum + (data.migration.districts[String(d)]?.from[homeState] ?? 0),
+      (sum, d) => sum + (data.migration.districts[String(d)]?.from[homeState2011] ?? 0),
       0,
     );
     if (people > 0) {
+      const from = homeState2011 === homeState ? homeState : `undivided ${homeState2011}`;
       lines.push({
-        text: `${formatIndian(people)} people from ${homeState} lived in ${city.name} in 2011`,
-        source: 'Census 2011, all reasons for moving',
+        text: `${formatIndian(people)} people from ${from} lived in ${city.name}`,
+        source: 'Census 2011, the latest count; Census 2027 results are pending',
       });
     }
   }
@@ -231,5 +263,5 @@ export function drawCard(canvas: HTMLCanvasElement, facts: CardFacts, states: St
   ctx.fillStyle = '#a9b1c6';
   ctx.font = font(28);
   ctx.fillText(siteUrl, 90, H - 110);
-  ctx.fillText('Census 2011 · Indian Railways · DataMeet · © OpenStreetMap contributors', 90, H - 66);
+  ctx.fillText('Indian Railways · EAC-PM · Census of India · © OpenStreetMap contributors', 90, H - 66);
 }

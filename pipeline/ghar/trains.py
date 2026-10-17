@@ -1,26 +1,19 @@
-"""Turn the 2016 timetable into animation-ready trips.
+"""Animation-ready trips from the parsed 2026 timetable.
 
 Each trip is a list of (lon, lat, minute) points, where minute counts from 00:00 on
-the train's first day. The timetable has gaps and contradictions; every repair is
-counted in the report rather than applied silently.
+the train's first day, plus the station code behind every point.
 """
 
 from __future__ import annotations
 
-import json
+import re
 from collections import Counter
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from .geo import haversine_km
 
 DAY = 1440
-MAX_SPAN_MIN = 120 * 60  # nothing in India runs longer; longer spans are data errors
-MAX_SPEED_KMH = 400  # faster than this between stops means a misplaced station
 LONG_DISTANCE_KM = 500
-# Clock time stepping back by more than this means the train crossed midnight;
-# less means a duplicated or out-of-order row.
-MIDNIGHT_GAP_MIN = 12 * 60
 
 # The animation shows one day, clock time 00:00-24:00, as minutes [DAY, 2 * DAY).
 WINDOW = (DAY, 2 * DAY)
@@ -43,49 +36,23 @@ class Trip:
         return self.points[-1][2] - self.points[0][2]
 
 
-def _clock(value) -> int | None:
-    if not value or value == "None":
-        return None
-    hours, minutes, *_ = (int(part) for part in str(value).split(":"))
-    return hours * 60 + minutes
+# Abbreviations that stay in capitals when a name is converted from ALL CAPS.
+KEEP_CAPS = {"SF", "AC", "LTT", "CST", "CSMT", "DMU", "MEMU", "DEMU", "EMU", "MMTS", "SMVT", "NG"}
+TWO_LETTER_WORDS = {"DA", "KI", "RD", "JN", "KA", "KE"}
 
 
-def _stop_times(rows: list[dict], report: Counter) -> list[tuple[str, int | None, int | None]]:
-    """Absolute arrival/departure minutes per stop, inferring days when missing."""
-    out = []
-    day = 0
-    last = -1
-    for row in rows:
-        arrival, departure = _clock(row["arrival"]), _clock(row["departure"])
-        absolute: list[int | None] = []
-        consistent = True
-        row_day, floor = day, last  # committed only if the whole row is consistent
-        for clock in (arrival, departure):
-            if clock is None:
-                absolute.append(None)
-                continue
-            minute = row_day * DAY + clock
-            if minute < floor:
-                if floor - minute > MIDNIGHT_GAP_MIN:
-                    # A big step back in clock time is midnight passing. This is how
-                    # days are inferred, since many rows leave the day blank.
-                    row_day += 1
-                    minute += DAY
-                else:
-                    # A small step back is a repeated row: the 2016 scrape copies the
-                    # previous station when a train reverses out of a terminus.
-                    consistent = False
-                    break
-            absolute.append(minute)
-            floor = minute
-        if not consistent:
-            report["stops_dropped_out_of_order"] += 1
-            continue
-        day, last = row_day, floor
-        if row.get("day") in (None, "None"):
-            report["stops_day_inferred"] += 1
-        out.append((row["station_code"], absolute[0], absolute[1]))
-    return out
+def tidy_name(name: str) -> str:
+    """'MYSORE - DARBHANGA BAGMATI SF Exp' -> 'Mysore - Darbhanga Bagmati SF Exp'."""
+
+    def word(match: re.Match) -> str:
+        w = match.group(0)
+        if w in KEEP_CAPS or (len(w) < 3 and w not in TWO_LETTER_WORDS):
+            return w
+        return w.capitalize()
+
+    # Re-join words the PDF hyphenated across lines ("Kan- pur" -> "Kanpur").
+    name = re.sub(r"(\w)- (?=[a-z])", r"\1", name)
+    return re.sub(r"\b[A-Z]{2,}\b", word, name)
 
 
 def _strictly_increasing(points: list[list[float]], report: Counter) -> None:
@@ -105,68 +72,6 @@ def _strictly_increasing(points: list[list[float]], report: Counter) -> None:
         i = j + 1
 
 
-def build(raw: Path, stations: dict[str, tuple[float, float]]) -> tuple[list[Trip], dict]:
-    report: Counter = Counter()
-    meta = {
-        f["properties"]["number"]: f["properties"]
-        for f in json.loads((raw / "trains.json").read_text(encoding="utf-8"))["features"]
-    }
-    by_train: dict[str, list[dict]] = {}
-    for row in json.loads((raw / "schedules.json").read_text(encoding="utf-8")):
-        by_train.setdefault(row["train_number"], []).append(row)
-
-    trips: list[Trip] = []
-    for number, rows in by_train.items():
-        rows.sort(key=lambda r: r["id"])
-        props = meta.get(number, {})
-        points: list[list] = []  # lon, lat, minute, station code
-        for code, arrival, departure in _stop_times(rows, report):
-            if code not in stations:
-                report["stops_without_coordinates"] += 1
-                continue
-            lon, lat = stations[code]
-            for minute in (arrival, departure):
-                if minute is not None and not (points and points[-1][2] == minute):
-                    points.append([lon, lat, float(minute), code])
-
-        # Drop stops that imply impossible speed: one of the two stations is misplaced.
-        kept: list[list] = []
-        for point in points:
-            if kept:
-                prev = kept[-1]
-                hours = (point[2] - prev[2]) / 60
-                km = haversine_km(prev[0], prev[1], point[0], point[1])
-                if hours > 0 and km / hours > MAX_SPEED_KMH:
-                    report["points_dropped_too_fast"] += 1
-                    continue
-            kept.append(point)
-
-        if len(kept) < 2:
-            report["trains_dropped_too_few_points"] += 1
-            continue
-        _strictly_increasing(kept, report)
-        trip = Trip(
-            number=number,
-            name=props.get("name") or rows[0].get("train_name") or number,
-            origin=props.get("from_station_code") or rows[0]["station_code"],
-            destination=props.get("to_station_code") or rows[-1]["station_code"],
-            kind=props.get("type") or "",
-            distance_km=float(props.get("distance") or 0),
-            points=[(p[0], p[1], p[2]) for p in kept],
-            stops=[(p[3], p[2]) for p in kept],
-        )
-        if trip.span > MAX_SPAN_MIN:
-            report["trains_dropped_span_too_long"] += 1
-            continue
-        trips.append(trip)
-
-    report["trains_in"] = len(by_train)
-    report["trains_out"] = len(trips)
-    report["long_distance_trains"] = sum(t.distance_km >= LONG_DISTANCE_KM for t in trips)
-    report["points_out"] = sum(len(t.points) for t in trips)
-    return trips, dict(report)
-
-
 def loop_copies(trip: Trip) -> list[list[tuple[float, float, float]]]:
     """Shift a trip by whole days so every night it would be running shows up.
 
@@ -182,3 +87,36 @@ def loop_copies(trip: Trip) -> list[list[tuple[float, float, float]]]:
             copies.append([(lon, lat, t + offset) for lon, lat, t in trip.points])
         offset += DAY
     return copies
+
+
+def from_tag(tag_trains, coords: dict[str, tuple[float, float]]) -> tuple[list[Trip], dict]:
+    """Trips from parsed Trains at a Glance 2026 schedules (see ghar.tag)."""
+    report: Counter = Counter()
+    trips: list[Trip] = []
+    for train in tag_trains:
+        points: list[list] = []
+        for code, arrival, departure in train.stops:
+            lon, lat = coords[code]
+            for minute in (arrival, departure):
+                if not (points and points[-1][2] == minute and points[-1][3] == code):
+                    points.append([lon, lat, minute, code])
+        _strictly_increasing(points, report)
+        distance = sum(
+            haversine_km(a[0], a[1], b[0], b[1]) for a, b in zip(points, points[1:], strict=False)
+        )
+        trips.append(
+            Trip(
+                number=train.number,
+                name=tidy_name(train.name),
+                origin=train.stops[0][0],
+                destination=train.stops[-1][0],
+                kind="",
+                distance_km=round(distance),  # straight lines between listed stops
+                points=[(p[0], p[1], p[2]) for p in points],
+                stops=[(p[3], p[2]) for p in points],
+            )
+        )
+    report["trains_out"] = len(trips)
+    report["long_distance_trains"] = sum(t.distance_km >= LONG_DISTANCE_KM for t in trips)
+    report["points_out"] = sum(len(t.points) for t in trips)
+    return trips, dict(report)

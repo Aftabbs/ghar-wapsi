@@ -25,7 +25,7 @@
       <section class="hud" aria-label="Animation controls">
         <p class="clock" aria-live="off"><span id="clock">00:00</span></p>
         <p id="legend" class="legend" aria-live="polite">Each light is a train · 24 hours in 60 seconds</p>
-        <p class="caveat">2016 timetable snapshot · weekly trains shown as daily · <a href="methods.html">How this was made</a></p>
+        <p class="caveat">Official timetable: Trains at a Glance 2026 · weekly trains shown as daily · <a href="methods.html">How this was made</a></p>
         <div class="modes" role="group" aria-label="What to show">
           <button id="festival" type="button" aria-pressed="false" disabled>Festival specials</button>
           <button id="bengaluru" type="button" aria-pressed="false" disabled>From Bengaluru</button>
@@ -44,8 +44,8 @@
       <section id="summary" class="visually-hidden" aria-label="Text summary">
         <h2>What the map shows</h2>
         <p id="summary-text">
-          The map animates every train in an open 2016 Indian Railways timetable across one
-          24-hour day, compressed into 60 seconds.
+          The map animates the long-distance trains in the Indian Railways timetable Trains at a
+          Glance 2026 across one 24-hour day, compressed into 60 seconds.
         </p>
       </section>
       <dialog id="card-dialog" aria-labelledby="card-heading">
@@ -61,7 +61,7 @@
             <label>Home district
               <select id="card-district" disabled></select>
             </label>
-            <p class="small">Districts use 2011 Census boundaries; Telangana is listed under Andhra Pradesh.</p>
+            <p class="small">Districts follow 2011 Census boundaries, the latest official count.</p>
             <p id="card-hint" class="small" role="status" aria-live="polite"></p>
             <div class="card-actions">
               <button id="card-share" type="button" class="primary" disabled>Share</button>
@@ -74,7 +74,7 @@
       </dialog>
     </main>
     <footer class="attribution">
-      Data: DataMeet timetable (2016) · © OpenStreetMap contributors · Survey of India boundary
+      Timings: Trains at a Glance 2026, Ministry of Railways · Festival specials: zonal railway notices · © OpenStreetMap contributors · Survey of India boundary
     </footer>
     <script type="module" src="/src/main.ts"></script>
   </body>
