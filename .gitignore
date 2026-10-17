@@ -7,3 +7,4 @@ dist/
 web/shots/
 web/test-results/
 web/playwright-report/
+*.egg-info/
