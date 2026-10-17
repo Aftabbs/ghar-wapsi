@@ -1,8 +1,16 @@
 import { Deck, type MapViewState, WebMercatorViewport } from '@deck.gl/core';
 import { TripsLayer } from '@deck.gl/geo-layers';
-import { GeoJsonLayer } from '@deck.gl/layers';
+import { GeoJsonLayer, PathLayer, ScatterplotLayer } from '@deck.gl/layers';
 
 import { activeTrips, clockLabel, DAY, loadTrips, type TripBuffers, WINDOW } from './data';
+import {
+  arcPath,
+  isHomeward,
+  type Special,
+  type SpecialTrip,
+  specialTrips,
+  summary,
+} from './festival';
 import './style.css';
 
 const DATA = `${import.meta.env.BASE_URL}data/`;
@@ -10,6 +18,18 @@ const LOOP_SECONDS = 60; // one clock day per minute of real time
 const MINUTES_PER_MS = DAY / (LOOP_SECONDS * 1000);
 const TRAIL_MIN = { full: 40, light: 25 }; // short trails read as moving trains, long ones as track
 const SLOW_FRAME_MS = 40; // slower than ~25 fps on average: switch to the light path
+const SPECIAL_TRAIL_MIN = 360; // specials leave a long gold wake so the arc home reads
+const GOLD: [number, number, number] = [255, 205, 90];
+// Additive blending: where trains overlap, the light adds up into a glow.
+const GLOW = {
+  blend: true,
+  blendColorOperation: 'add',
+  blendColorSrcFactor: 'src-alpha',
+  blendColorDstFactor: 'one',
+  blendAlphaOperation: 'add',
+  blendAlphaSrcFactor: 'one',
+  blendAlphaDstFactor: 'one-minus-src-alpha',
+} as const;
 
 const ui = {
   clock: document.querySelector<HTMLSpanElement>('#clock')!,
@@ -17,6 +37,9 @@ const ui = {
   time: document.querySelector<HTMLInputElement>('#time')!,
   status: document.querySelector<HTMLParagraphElement>('#status')!,
   summary: document.querySelector<HTMLParagraphElement>('#summary-text')!,
+  festival: document.querySelector<HTMLButtonElement>('#festival')!,
+  bengaluru: document.querySelector<HTMLButtonElement>('#bengaluru')!,
+  legend: document.querySelector<HTMLParagraphElement>('#legend')!,
 };
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -28,6 +51,10 @@ const state = {
   long: null as TripBuffers | null,
   rest: null as TripBuffers | null,
   states: null as unknown,
+  festival: false,
+  bengaluru: false,
+  specials: [] as Special[],
+  specialTrips: [] as SpecialTrip[],
 };
 
 // Mainland India plus the Northeast; islands may sit off the fitted view.
@@ -76,8 +103,8 @@ function tripsLayer(id: string, trips: TripBuffers, color: [number, number, numb
     capRounded: true,
     jointRounded: true,
     fadeTrail: true,
-    opacity: 0.9,
-    parameters: { blend: true, blendFunc: [770, 1] }, // additive glow where trains overlap
+    opacity: state.festival ? 0.22 : 0.9,
+    parameters: GLOW,
   });
 }
 
@@ -98,7 +125,51 @@ function layers() {
   }
   if (state.rest && !state.light) out.push(tripsLayer('rest', state.rest, [255, 140, 70], 1));
   if (state.long) out.push(tripsLayer('long', state.long, [255, 196, 110], 2));
+  if (state.festival) out.push(...festivalLayers());
   return out;
+}
+
+function inFocus(special: Special): boolean {
+  return !state.bengaluru || special.oState === 'Karnataka';
+}
+
+function festivalLayers() {
+  const homeward = state.specials.filter(isHomeward);
+  const focused = homeward.filter(inFocus);
+  return [
+    // Every verified homeward special as a faint route, including those whose notice
+    // gives no timings (they are drawn but never animated).
+    new PathLayer<Special>({
+      id: 'special-routes',
+      data: homeward,
+      getPath: (s) => arcPath(s.from, s.to),
+      getColor: (s) => [...GOLD, inFocus(s) ? 70 : 18],
+      widthMinPixels: 1,
+      updateTriggers: { getColor: state.bengaluru },
+    }),
+    new TripsLayer<SpecialTrip>({
+      id: 'special-trips',
+      data: state.specialTrips.filter((t) => isHomeward(t.special) && inFocus(t.special)),
+      getPath: (t) => t.path,
+      getTimestamps: (t) => t.timestamps,
+      getColor: GOLD,
+      currentTime: state.minute,
+      trailLength: SPECIAL_TRAIL_MIN,
+      widthMinPixels: 3,
+      capRounded: true,
+      jointRounded: true,
+      fadeTrail: true,
+      parameters: GLOW,
+    }),
+    new ScatterplotLayer<Special>({
+      id: 'special-ends',
+      data: focused,
+      getPosition: (s) => s.to,
+      getRadius: 3,
+      radiusUnits: 'pixels',
+      getFillColor: [...GOLD, 200],
+    }),
+  ];
 }
 
 const deck = new Deck({
@@ -135,6 +206,31 @@ function frame(now: number) {
   requestAnimationFrame(frame);
 }
 
+function festivalLegend(): string {
+  const s = summary(state.specials);
+  const focus = state.specials.filter((x) => isHomeward(x) && x.oState === 'Karnataka');
+  if (state.bengaluru) {
+    return `Gold: ${focus.length} verified festival specials leaving Bengaluru for home`;
+  }
+  return `Gold: ${s.homeward} verified Diwali–Chhath specials heading home`;
+}
+
+function setFestival(on: boolean) {
+  state.festival = on;
+  ui.festival.setAttribute('aria-pressed', String(on));
+  ui.legend.textContent = on ? festivalLegend() : 'Each light is a train · 24 hours in 60 seconds';
+  render();
+}
+
+function setBengaluru(on: boolean) {
+  state.bengaluru = on;
+  ui.bengaluru.setAttribute('aria-pressed', String(on));
+  if (on && !state.festival) setFestival(true);
+  // No camera move: Bengaluru's specials reach as far as Assam, so all of India stays in view.
+  ui.legend.textContent = state.festival ? festivalLegend() : ui.legend.textContent;
+  render();
+}
+
 function setPlaying(playing: boolean) {
   state.playing = playing;
   ui.play.textContent = playing ? 'Pause' : 'Play';
@@ -142,6 +238,8 @@ function setPlaying(playing: boolean) {
 }
 
 ui.play.addEventListener('click', () => setPlaying(!state.playing));
+ui.festival.addEventListener('click', () => setFestival(!state.festival));
+ui.bengaluru.addEventListener('click', () => setBengaluru(!state.bengaluru));
 ui.time.addEventListener('input', () => {
   setPlaying(false);
   state.minute = WINDOW[0] + Number(ui.time.value);
@@ -170,7 +268,15 @@ async function start() {
       `The map animates ${long.length.toLocaleString('en-IN')} long-distance train runs from an open 2016 ` +
       `Indian Railways timetable across one day, compressed into 60 seconds. At 8 pm about ` +
       `${moving.toLocaleString('en-IN')} long-distance trains are on the move.`;
-    state.rest = await loadTrips(`${DATA}trains-rest.bin`);
+    const [rest, specials] = await Promise.all([
+      loadTrips(`${DATA}trains-rest.bin`),
+      fetch(`${DATA}specials-2026.json`).then((r) => r.json() as Promise<Special[]>),
+    ]);
+    state.rest = rest;
+    state.specials = specials;
+    state.specialTrips = specialTrips(specials);
+    ui.festival.disabled = false;
+    ui.bengaluru.disabled = false;
     render();
   } catch (error) {
     ui.status.textContent = 'The train data could not be loaded. Please refresh the page.';

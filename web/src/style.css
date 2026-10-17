@@ -109,6 +109,25 @@ button {
   cursor: pointer;
 }
 
+.modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+button[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a1206;
+  font-weight: 600;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
 .scrub {
   flex: 1;
   display: flex;

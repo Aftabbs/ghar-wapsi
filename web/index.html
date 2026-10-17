@@ -23,8 +23,12 @@
 
       <section class="hud" aria-label="Animation controls">
         <p class="clock" aria-live="off"><span id="clock">00:00</span></p>
-        <p class="legend">Each light is a train · 24 hours in 60 seconds</p>
+        <p id="legend" class="legend" aria-live="polite">Each light is a train · 24 hours in 60 seconds</p>
         <p class="caveat">2016 timetable snapshot · weekly trains shown as daily · <a href="methods.html">How this was made</a></p>
+        <div class="modes" role="group" aria-label="What to show">
+          <button id="festival" type="button" aria-pressed="false" disabled>Festival specials</button>
+          <button id="bengaluru" type="button" aria-pressed="false" disabled>From Bengaluru</button>
+        </div>
         <div class="controls">
           <button id="play" type="button" aria-pressed="true">Pause</button>
           <label class="scrub">
