@@ -9,6 +9,8 @@ export interface Special {
   d: string;
   oState: string | null;
   dState: string | null;
+  oDistrict: number | null;
+  dDistrict: number | null;
   from: [number, number];
   to: [number, number];
   dep: string | null;

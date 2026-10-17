@@ -1,4 +1,87 @@
 {
+  "routes": {
+    "bengaluru": {
+      "direct": 260,
+      "nearest_served": 100
+    },
+    "delhi": {
+      "direct": 403,
+      "nearest_served": 72
+    },
+    "mumbai": {
+      "direct": 357,
+      "nearest_served": 81
+    },
+    "hyderabad": {
+      "direct": 240,
+      "nearest_served": 85
+    },
+    "chennai": {
+      "direct": 283,
+      "nearest_served": 108
+    },
+    "kolkata": {
+      "direct": 140,
+      "nearest_served": 67
+    },
+    "pune": {
+      "direct": 252,
+      "nearest_served": 81
+    },
+    "ahmedabad": {
+      "direct": 332,
+      "nearest_served": 98
+    },
+    "surat": {
+      "direct": 305,
+      "nearest_served": 79
+    },
+    "jaipur": {
+      "direct": 293,
+      "nearest_served": 86
+    },
+    "ludhiana": {
+      "direct": 309,
+      "nearest_served": 91
+    },
+    "chandigarh": {
+      "direct": 191,
+      "nearest_served": 99
+    },
+    "gurugram": {
+      "direct": 111,
+      "nearest_served": 60
+    },
+    "noida": {
+      "direct": 314,
+      "nearest_served": 79
+    },
+    "kochi": {
+      "direct": 295,
+      "nearest_served": 104
+    },
+    "coimbatore": {
+      "direct": 245,
+      "nearest_served": 104
+    },
+    "nagpur": {
+      "direct": 287,
+      "nearest_served": 96
+    },
+    "indore": {
+      "direct": 167,
+      "nearest_served": 68
+    },
+    "visakhapatnam": {
+      "direct": 229,
+      "nearest_served": 87
+    },
+    "guwahati": {
+      "direct": 247,
+      "nearest_served": 100
+    },
+    "districts": 641
+  },
   "stations": {
     "datameet_stations": 8697,
     "osm_mainline_stations": 7892,
@@ -122,7 +205,11 @@
     {
       "file": "specials-2026.json",
       "specials": 113,
-      "bytes": 48465
+      "bytes": 52035
+    },
+    {
+      "file": "routes.json",
+      "bytes": 182232
     }
   ]
 }

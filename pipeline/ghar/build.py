@@ -10,7 +10,8 @@ import json
 import sys
 from pathlib import Path
 
-from . import boundaries, census, pack, specials, stations, trains
+from . import boundaries, census, pack, routes, specials, stations, trains
+from .geo import DistrictIndex
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "data" / "raw"
@@ -53,13 +54,28 @@ def main() -> int:
         census.write(census.parse(RAW / "census-d02"), OUT / "migration-2011.json"),
     ]
 
-    by_code = {s.code: {"lon": s.lon, "lat": s.lat, "state": s.state} for s in gazetteer}
+    by_code = {
+        s.code: {"lon": s.lon, "lat": s.lat, "state": s.state, "district": s.district_code}
+        for s in gazetteer
+    }
     festival, specials_report = specials.build(
         ROOT / "data" / "specials" / "specials-2026.csv", by_code
     )
     files.append(specials.write(festival, OUT / "specials-2026.json"))
 
+    districts = DistrictIndex(RAW / "districts-2011.geojson").districts
+    centroids = {d.census_code: d.centroid for d in districts}
+    route_data, route_report = routes.build(
+        trips, {s.code: s.district_code for s in gazetteer}, centroids
+    )
+    route_data["districts"] = {
+        str(d.census_code): [d.name, d.state, round(d.centroid[0], 3), round(d.centroid[1], 3)]
+        for d in sorted(districts, key=lambda d: (d.state, d.name))
+    }
+    files.append(routes.write(route_data, OUT / "routes.json"))
+
     report = {
+        "routes": route_report,
         "stations": station_report,
         "trains": train_report,
         "specials": specials_report,

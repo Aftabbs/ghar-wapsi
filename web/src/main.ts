@@ -11,9 +11,11 @@ import {
   specialTrips,
   summary,
 } from './festival';
+import { setupCard } from './cardUi';
 import './style.css';
 
 const DATA = `${import.meta.env.BASE_URL}data/`;
+const SITE_URL = 'aftabbs.github.io/ghar-wapsi';
 const LOOP_SECONDS = 60; // one clock day per minute of real time
 const MINUTES_PER_MS = DAY / (LOOP_SECONDS * 1000);
 const TRAIL_MIN = { full: 40, light: 25 }; // short trails read as moving trains, long ones as track
@@ -284,5 +286,13 @@ async function start() {
   }
   requestAnimationFrame(frame);
 }
+
+setupCard({
+  dataUrl: DATA,
+  specials: () => state.specials,
+  states: () => state.states,
+  siteUrl: SITE_URL,
+  onCardMade: () => {},
+});
 
 start();

@@ -35,6 +35,8 @@ class Trip:
     kind: str
     distance_km: float
     points: list[tuple[float, float, float]] = field(default_factory=list)
+    # Station code and minute for every kept point (arrival and departure each count).
+    stops: list[tuple[str, float]] = field(default_factory=list)
 
     @property
     def span(self) -> float:
@@ -117,7 +119,7 @@ def build(raw: Path, stations: dict[str, tuple[float, float]]) -> tuple[list[Tri
     for number, rows in by_train.items():
         rows.sort(key=lambda r: r["id"])
         props = meta.get(number, {})
-        points: list[list[float]] = []
+        points: list[list] = []  # lon, lat, minute, station code
         for code, arrival, departure in _stop_times(rows, report):
             if code not in stations:
                 report["stops_without_coordinates"] += 1
@@ -125,10 +127,10 @@ def build(raw: Path, stations: dict[str, tuple[float, float]]) -> tuple[list[Tri
             lon, lat = stations[code]
             for minute in (arrival, departure):
                 if minute is not None and not (points and points[-1][2] == minute):
-                    points.append([lon, lat, float(minute)])
+                    points.append([lon, lat, float(minute), code])
 
         # Drop stops that imply impossible speed: one of the two stations is misplaced.
-        kept: list[list[float]] = []
+        kept: list[list] = []
         for point in points:
             if kept:
                 prev = kept[-1]
@@ -151,6 +153,7 @@ def build(raw: Path, stations: dict[str, tuple[float, float]]) -> tuple[list[Tri
             kind=props.get("type") or "",
             distance_km=float(props.get("distance") or 0),
             points=[(p[0], p[1], p[2]) for p in kept],
+            stops=[(p[3], p[2]) for p in kept],
         )
         if trip.span > MAX_SPAN_MIN:
             report["trains_dropped_span_too_long"] += 1

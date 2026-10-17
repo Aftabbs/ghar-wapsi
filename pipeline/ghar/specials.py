@@ -65,6 +65,8 @@ def build(csv_path: Path, stations: dict[str, dict]) -> tuple[list[dict], dict]:
                 "d": row["to_code"].strip(),
                 "oState": origin["state"],
                 "dState": dest["state"],
+                "oDistrict": origin.get("district"),
+                "dDistrict": dest.get("district"),
                 "from": [origin["lon"], origin["lat"]],
                 "to": [dest["lon"], dest["lat"]],
                 "dep": row["departure_time"] or None,

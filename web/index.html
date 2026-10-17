@@ -28,6 +28,7 @@
         <div class="modes" role="group" aria-label="What to show">
           <button id="festival" type="button" aria-pressed="false" disabled>Festival specials</button>
           <button id="bengaluru" type="button" aria-pressed="false" disabled>From Bengaluru</button>
+          <button id="make-card" type="button" class="primary">Make your card</button>
         </div>
         <div class="controls">
           <button id="play" type="button" aria-pressed="true">Pause</button>
@@ -46,6 +47,30 @@
           24-hour day, compressed into 60 seconds.
         </p>
       </section>
+      <dialog id="card-dialog" aria-labelledby="card-heading">
+        <div class="card-layout">
+          <form method="dialog" class="card-form" onsubmit="return false">
+            <h2 id="card-heading">My journey home</h2>
+            <label>I live in
+              <select id="card-city"></select>
+            </label>
+            <label>Home state
+              <select id="card-state"></select>
+            </label>
+            <label>Home district
+              <select id="card-district" disabled></select>
+            </label>
+            <p class="small">Districts use 2011 Census boundaries; Telangana is listed under Andhra Pradesh.</p>
+            <p id="card-hint" class="small" role="status" aria-live="polite"></p>
+            <div class="card-actions">
+              <button id="card-share" type="button" class="primary" disabled>Share</button>
+              <a id="card-download" class="button" hidden>Download</a>
+              <button id="card-close" type="button">Close</button>
+            </div>
+          </form>
+          <canvas id="card-canvas" width="1080" height="1920" role="img" aria-label="Your card will appear here"></canvas>
+        </div>
+      </dialog>
     </main>
     <footer class="attribution">
       Data: DataMeet timetable (2016) · © OpenStreetMap contributors · Survey of India boundary
