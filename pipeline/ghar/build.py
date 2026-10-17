@@ -10,7 +10,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import boundaries, pack, stations, trains
+from . import boundaries, census, pack, specials, stations, trains
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "data" / "raw"
@@ -50,9 +50,21 @@ def main() -> int:
         pack.pack(long_trips, train_ids, OUT / "trains-long.bin"),
         pack.pack(other_trips, train_ids, OUT / "trains-rest.bin"),
         boundaries.build(RAW, OUT / "india-states.json"),
+        census.write(census.parse(RAW / "census-d02"), OUT / "migration-2011.json"),
     ]
 
-    report = {"stations": station_report, "trains": train_report, "files": files}
+    by_code = {s.code: {"lon": s.lon, "lat": s.lat, "state": s.state} for s in gazetteer}
+    festival, specials_report = specials.build(
+        ROOT / "data" / "specials" / "specials-2026.csv", by_code
+    )
+    files.append(specials.write(festival, OUT / "specials-2026.json"))
+
+    report = {
+        "stations": station_report,
+        "trains": train_report,
+        "specials": specials_report,
+        "files": files,
+    }
     REPORT.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2, ensure_ascii=False))
     return 0

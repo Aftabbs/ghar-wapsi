@@ -86,6 +86,12 @@
     "long_distance_trains": 1647,
     "points_out": 482284
   },
+  "specials": {
+    "rows_in": 113,
+    "rows_out": 113,
+    "with_journey_time": 90,
+    "problems": []
+  },
   "files": [
     {
       "file": "trains-long.bin",
@@ -105,6 +111,18 @@
       "file": "india-states.json",
       "states": 36,
       "bytes": 246748
+    },
+    {
+      "file": "migration-2011.json",
+      "bytes": 389999,
+      "states": 35,
+      "districts": 640,
+      "interstate_total": 54264749
+    },
+    {
+      "file": "specials-2026.json",
+      "specials": 113,
+      "bytes": 48465
     }
   ]
 }
