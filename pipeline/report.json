@@ -1,0 +1,105 @@
+{
+  "stations": {
+    "datameet_stations": 8697,
+    "osm_mainline_stations": 7892,
+    "merged": 9659,
+    "added_from_osm": 962,
+    "coordinates_corrected_from_osm": 2,
+    "corrections_km": [
+      [
+        "HYG",
+        39
+      ],
+      [
+        "NGB",
+        36
+      ]
+    ],
+    "disagreements_kept_datameet_km": [
+      [
+        "KTCR",
+        1925
+      ],
+      [
+        "KAVI",
+        1621
+      ],
+      [
+        "SVZ",
+        1602
+      ],
+      [
+        "LING",
+        1108
+      ],
+      [
+        "VSP",
+        694
+      ],
+      [
+        "BBK",
+        686
+      ],
+      [
+        "SQK",
+        326
+      ],
+      [
+        "MUW",
+        308
+      ],
+      [
+        "SJDA",
+        171
+      ],
+      [
+        "MQA",
+        150
+      ],
+      [
+        "KZPR",
+        136
+      ],
+      [
+        "JDPR",
+        133
+      ],
+      [
+        "BNHL",
+        101
+      ],
+      [
+        "KUTR",
+        87
+      ]
+    ],
+    "outside_india_districts": 1
+  },
+  "trains": {
+    "stops_without_coordinates": 1876,
+    "points_dropped_too_fast": 674,
+    "stops_day_inferred": 22561,
+    "stops_dropped_out_of_order": 640,
+    "trains_dropped_too_few_points": 24,
+    "trains_in": 5208,
+    "trains_out": 5184,
+    "long_distance_trains": 1647,
+    "points_out": 482284
+  },
+  "files": [
+    {
+      "file": "trains-long.bin",
+      "trips": 3670,
+      "points": 155814,
+      "bytes": 956944,
+      "time_base": -64
+    },
+    {
+      "file": "trains-rest.bin",
+      "trips": 3910,
+      "points": 50948,
+      "bytes": 329188,
+      "time_base": 1129
+    }
+  ]
+}
