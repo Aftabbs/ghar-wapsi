@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 import time
 import urllib.parse
@@ -74,6 +75,26 @@ def fetch_osm_stations(target: Path) -> None:
     target.write_text(json.dumps(stations, ensure_ascii=False), encoding="utf-8")
 
 
+# Census 2011 table D-02 (migrants by place of last residence): one NADA catalogue
+# entry per state/UT plus all-India (PC11_D02-00), catalogue ids 10743-10778.
+CENSUS_CATALOG = "https://censusindia.gov.in/nada/index.php/catalog/"
+CENSUS_D02_IDS = range(10743, 10779)
+
+
+def fetch_census_d02(folder: Path) -> None:
+    folder.mkdir(parents=True, exist_ok=True)
+    for catalog_id in CENSUS_D02_IDS:
+        target = folder / f"d02-{catalog_id}.xlsx"
+        if target.exists():
+            continue
+        page = _get(f"{CENSUS_CATALOG}{catalog_id}/related-materials").decode("utf-8", "replace")
+        match = re.search(rf"{CENSUS_CATALOG}{catalog_id}/download/\d+", page)
+        if not match:
+            raise RuntimeError(f"no download link on catalogue page {catalog_id}")
+        print(f"fetch  census D-02 catalogue {catalog_id}")
+        target.write_bytes(_get(match.group(0)))
+
+
 def main() -> int:
     RAW.mkdir(parents=True, exist_ok=True)
     for name, url in SOURCES.items():
@@ -89,6 +110,7 @@ def main() -> int:
     else:
         print("fetch  osm-stations.json (Overpass)")
         fetch_osm_stations(osm)
+    fetch_census_d02(RAW / "census-d02")
     return 0
 
 

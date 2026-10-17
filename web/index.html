@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>Ghar Wapsi — every train home</title>
+    <meta
+      name="description"
+      content="India's festival homecoming, animated. Every train on one night, and the 2026 Diwali and Chhath specials heading home."
+    />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%230b1020'/><circle cx='16' cy='16' r='5' fill='%23ffb347'/></svg>" />
+  </head>
+  <body>
+    <a class="skip" href="#summary">Skip to text summary</a>
+    <main>
+      <div id="map" role="img" aria-label="Animated map of India showing trains moving across one day"></div>
+
+      <header class="title">
+        <h1>Ghar Wapsi</h1>
+        <p class="tagline">Every night, India goes home.</p>
+      </header>
+
+      <section class="hud" aria-label="Animation controls">
+        <p class="clock" aria-live="off"><span id="clock">00:00</span></p>
+        <p class="legend">Each light is a train · 24 hours in 60 seconds</p>
+        <p class="caveat">2016 timetable snapshot · weekly trains shown as daily · <a href="methods.html">How this was made</a></p>
+        <div class="controls">
+          <button id="play" type="button" aria-pressed="true">Pause</button>
+          <label class="scrub">
+            <span class="visually-hidden">Time of day</span>
+            <input id="time" type="range" min="0" max="1439" step="1" value="0" />
+          </label>
+        </div>
+        <p id="status" class="status" role="status" aria-live="polite">Loading trains…</p>
+      </section>
+
+      <section id="summary" class="visually-hidden" aria-label="Text summary">
+        <h2>What the map shows</h2>
+        <p id="summary-text">
+          The map animates every train in an open 2016 Indian Railways timetable across one
+          24-hour day, compressed into 60 seconds.
+        </p>
+      </section>
+    </main>
+    <footer class="attribution">
+      Data: DataMeet timetable (2016) · © OpenStreetMap contributors · Survey of India boundary
+    </footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

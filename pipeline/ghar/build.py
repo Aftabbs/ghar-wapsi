@@ -10,7 +10,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import pack, stations, trains
+from . import boundaries, pack, stations, trains
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "data" / "raw"
@@ -49,6 +49,7 @@ def main() -> int:
     files = [
         pack.pack(long_trips, train_ids, OUT / "trains-long.bin"),
         pack.pack(other_trips, train_ids, OUT / "trains-rest.bin"),
+        boundaries.build(RAW, OUT / "india-states.json"),
     ]
 
     report = {"stations": station_report, "trains": train_report, "files": files}

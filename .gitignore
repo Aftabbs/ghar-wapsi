@@ -4,3 +4,5 @@ __pycache__/
 .ruff_cache/
 node_modules/
 dist/
+web/shots/
+web/test-results/

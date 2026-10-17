@@ -1,0 +1,198 @@
+:root {
+  --bg: #070b16;
+  --land: #0f1628;
+  --border: #22304f;
+  --text: #f3f1ea;
+  --muted: #a9b1c6;
+  --accent: #ffb347;
+  --focus: #ffd27a;
+  --panel: rgba(7, 11, 22, 0.72);
+  font-family: 'Noto Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+main {
+  position: relative;
+  height: 100dvh;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+}
+
+.title {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  pointer-events: none;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 5vw, 2.6rem);
+  letter-spacing: 0.02em;
+}
+
+.tagline {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: clamp(0.95rem, 2.6vw, 1.15rem);
+}
+
+.hud {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 40px;
+  max-width: 460px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--panel);
+  backdrop-filter: blur(6px);
+}
+
+.clock {
+  margin: 0;
+  font-size: clamp(2.2rem, 9vw, 3.4rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.legend {
+  margin: 6px 0 0;
+  font-size: 1rem;
+}
+
+.caveat {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.caveat a,
+.attribution a {
+  color: var(--muted);
+}
+
+.controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+button {
+  min-width: 88px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #18223b;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.scrub {
+  flex: 1;
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+}
+
+input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.status {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  min-height: 1.2em;
+}
+
+.attribution {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 6px 16px;
+  font-size: 0.7rem;
+  color: var(--muted);
+  background: rgba(7, 11, 22, 0.85);
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 10;
+  padding: 8px 12px;
+  background: var(--accent);
+  color: #000;
+}
+
+.skip:focus {
+  left: 16px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Short screens (landscape phones, small laptop windows): keep the map visible. */
+@media (max-height: 640px) {
+  .title h1 {
+    font-size: 1.4rem;
+  }
+  .tagline {
+    font-size: 0.9rem;
+  }
+  .hud {
+    bottom: 32px;
+    padding: 10px 12px;
+  }
+  .clock {
+    font-size: 2rem;
+  }
+  .legend {
+    font-size: 0.9rem;
+  }
+  .controls {
+    margin-top: 8px;
+  }
+}
+
+@media (min-width: 760px) {
+  .hud {
+    right: auto;
+    width: 440px;
+  }
+}
