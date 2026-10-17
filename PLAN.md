@@ -130,6 +130,19 @@ DataMeet · Survey of India boundary" on the map footer, methods page and card.
 
 Daily specials curation continues in parallel with Oct 21–25 work (≥ 40 by launch).
 
+### Progress (updated 2026-10-17)
+Work planned for Oct 18–21, plus most of Oct 22–23, is done:
+- Pipeline: stations merged (9,659), timetable repaired (5,184/5,208 trains), first-view
+  file 957 KB, Census D-02 parsed and cross-checked, routes for 20 cities × 641 districts.
+- Specials: 113 rows from official notices (12 from Bengaluru), each with a source link;
+  4 spot-checked against the notice text/image.
+- Web: night map, festival mode, Bengaluru view, card generator (English), methods page,
+  GoatCounter, reduced-motion path. 60 fps on desktop GPU.
+- Quality: 24 pipeline tests, 15 unit tests, 3 Playwright tests incl. axe WCAG 2.2 AA (clean).
+- Repo pushed to github.com/Aftabbs/ghar-wapsi; CI and Pages deploy configured.
+Scope changes: card shows direct trains only (no one-change routing) in v1; Hindi card,
+film mode/video, OG images, real-phone share test and the 5-person test remain.
+
 ## 7. Risks
 
 | Risk | Mitigation |
