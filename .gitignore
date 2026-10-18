@@ -9,3 +9,6 @@ web/test-results/
 web/playwright-report/
 *.egg-info/
 .planning/
+.env
+.env.*
+data/narrations/*.draft.json

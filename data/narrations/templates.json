@@ -1,0 +1,167 @@
+{
+ "model": "openai/gpt-oss-120b",
+ "note": "Drafted with openai/gpt-oss-120b on Groq from the situation facts, then edited and reviewed by hand for accuracy and Hindi grammar.",
+ "reviewed": true,
+ "templates": {
+  "specials=yes|chhath=yes|community=big": [
+   {
+    "en": "This Diwali and Chhath, festival specials are running from {city} to {state}, carrying a large community home.",
+    "hi": "इस दीवाली और छठ पर {city_hi} से {state_hi} तक त्योहार स्पेशल ट्रेनें चल रही हैं, जो एक बड़े समुदाय को घर ले जा रही हैं।"
+   },
+   {
+    "en": "For Chhath at the ghats, festival specials run from {city} to {state}, and a large community can head home on them.",
+    "hi": "घाटों पर छठ के लिए {city_hi} से {state_hi} तक त्योहार स्पेशल ट्रेनें चल रही हैं, और एक बड़ा समुदाय इनसे घर लौट सकता है।"
+   }
+  ],
+  "specials=yes|chhath=yes|community=medium": [
+   {
+    "en": "Diwali and Chhath festival specials run from {city} to {state}, carrying a sizeable community home.",
+    "hi": "दीवाली और छठ पर {city_hi} से {state_hi} तक त्योहार स्पेशल ट्रेनें चल रही हैं, जो एक अच्छे-खासे समुदाय को घर ले जा रही हैं।"
+   },
+   {
+    "en": "The community from {state} in {city} is sizeable, and this Chhath, festival specials can take it home to the ghats.",
+    "hi": "{city_hi} में {state_hi} के लोगों का अच्छा-खासा समुदाय है, और इस छठ पर त्योहार स्पेशल ट्रेनें उन्हें घाटों तक ले जा सकती हैं।"
+   }
+  ],
+  "specials=yes|chhath=yes|community=small": [
+   {
+    "en": "Festival specials are running from {city} to {state} this season, taking a small community home for Diwali and Chhath.",
+    "hi": "इस मौसम {city_hi} से {state_hi} तक त्योहार स्पेशल ट्रेनें चल रही हैं, जो एक छोटे समुदाय को दीवाली और छठ के लिए घर ले जा रही हैं।"
+   },
+   {
+    "en": "The community from {state} in {city} is small, but festival specials are running home for Diwali and Chhath.",
+    "hi": "{city_hi} में {state_hi} के लोगों का समुदाय छोटा है, पर दीवाली और छठ के लिए घर तक त्योहार स्पेशल ट्रेनें चल रही हैं।"
+   }
+  ],
+  "specials=yes|chhath=yes|community=none": [
+   {
+    "en": "Festival specials are running from {city} to {state} this season, in time for Diwali and Chhath.",
+    "hi": "दीवाली और छठ के लिए इस मौसम {city_hi} से {state_hi} तक त्योहार स्पेशल ट्रेनें चल रही हैं।"
+   },
+   {
+    "en": "Few people from {state} live in {city}, but festival specials are running there for Diwali and Chhath.",
+    "hi": "{city_hi} में {state_hi} के लोग कम हैं, फिर भी दीवाली और छठ के लिए वहाँ तक त्योहार स्पेशल ट्रेनें चल रही हैं।"
+   }
+  ],
+  "specials=yes|chhath=no|community=big": [
+   {
+    "en": "This Diwali, festival specials are running from {city} to {state}, carrying a large community home.",
+    "hi": "इस दीवाली {city_hi} से {state_hi} तक त्योहार स्पेशल ट्रेनें चल रही हैं, जो एक बड़े समुदाय को घर ले जा रही हैं।"
+   },
+   {
+    "en": "A large community from {state} lives in {city}, and festival specials can take it home for Diwali.",
+    "hi": "{city_hi} में {state_hi} के लोगों का बड़ा समुदाय रहता है, और दीवाली पर त्योहार स्पेशल ट्रेनें उन्हें घर ले जा सकती हैं।"
+   }
+  ],
+  "specials=yes|chhath=no|community=medium": [
+   {
+    "en": "This Diwali, festival specials are running from {city} to {state}, carrying a sizeable community home.",
+    "hi": "इस दीवाली {city_hi} से {state_hi} तक त्योहार स्पेशल ट्रेनें चल रही हैं, जो एक अच्छे-खासे समुदाय को घर ले जा रही हैं।"
+   },
+   {
+    "en": "With diyas waiting at home, festival specials run from {city} to {state} for a sizeable community.",
+    "hi": "घर पर दीये इंतज़ार कर रहे हैं, और {city_hi} से {state_hi} तक अच्छे-खासे समुदाय के लिए त्योहार स्पेशल ट्रेनें चल रही हैं।"
+   }
+  ],
+  "specials=yes|chhath=no|community=small": [
+   {
+    "en": "This Diwali, festival specials run from {city} to {state}, taking a small community home for the lights.",
+    "hi": "इस दीवाली {city_hi} से {state_hi} तक त्योहार स्पेशल ट्रेनें चल रही हैं, जो एक छोटे समुदाय को दीयों की रोशनी के लिए घर ले जा रही हैं।"
+   },
+   {
+    "en": "The community from {state} in {city} is small, and festival specials are running home for Diwali.",
+    "hi": "{city_hi} में {state_hi} के लोगों का समुदाय छोटा है, और दीवाली के लिए घर तक त्योहार स्पेशल ट्रेनें चल रही हैं।"
+   }
+  ],
+  "specials=yes|chhath=no|community=none": [
+   {
+    "en": "Festival specials are running from {city} to {state} this Diwali.",
+    "hi": "इस दीवाली {city_hi} से {state_hi} तक त्योहार स्पेशल ट्रेनें चल रही हैं।"
+   },
+   {
+    "en": "Few people from {state} live in {city}, but festival specials are running there this Diwali.",
+    "hi": "{city_hi} में {state_hi} के लोग कम हैं, फिर भी इस दीवाली वहाँ तक त्योहार स्पेशल ट्रेनें चल रही हैं।"
+   }
+  ],
+  "specials=no|chhath=yes|community=big": [
+   {
+    "en": "A large community from {state} lives in {city}, and no festival special is on our list yet, so check early for Diwali and Chhath.",
+    "hi": "{city_hi} में {state_hi} के लोगों का बड़ा समुदाय रहता है, और अभी हमारी सूची में कोई त्योहार स्पेशल नहीं है, इसलिए दीवाली और छठ के लिए जल्दी पता करें।"
+   },
+   {
+    "en": "Diwali and Chhath are near, and no special from {city} to {state} is on our list yet, so plan your trip early.",
+    "hi": "दीवाली और छठ करीब हैं, और अभी हमारी सूची में {city_hi} से {state_hi} तक कोई स्पेशल नहीं है, इसलिए यात्रा जल्दी तय करें।"
+   }
+  ],
+  "specials=no|chhath=yes|community=medium": [
+   {
+    "en": "A sizeable community from {state} lives in {city}, and no festival special is on our list yet, so check early for Diwali and Chhath.",
+    "hi": "{city_hi} में {state_hi} के लोगों का अच्छा-खासा समुदाय है, और अभी हमारी सूची में कोई त्योहार स्पेशल नहीं है, इसलिए दीवाली और छठ के लिए जल्दी पता करें।"
+   },
+   {
+    "en": "Diwali and Chhath are near, and no special from {city} to {state} is on our list yet, so plan your trip early.",
+    "hi": "दीवाली और छठ करीब हैं, और अभी हमारी सूची में {city_hi} से {state_hi} तक कोई स्पेशल नहीं है, इसलिए यात्रा जल्दी तय करें।"
+   }
+  ],
+  "specials=no|chhath=yes|community=small": [
+   {
+    "en": "The community from {state} in {city} is small, and no festival special is on our list yet, so check early for Diwali and Chhath.",
+    "hi": "{city_hi} में {state_hi} के लोगों का समुदाय छोटा है, और अभी हमारी सूची में कोई त्योहार स्पेशल नहीं है, इसलिए दीवाली और छठ के लिए जल्दी पता करें।"
+   },
+   {
+    "en": "Diwali and Chhath are near, and no special from {city} to {state} is on our list yet, so plan your trip early.",
+    "hi": "दीवाली और छठ करीब हैं, और अभी हमारी सूची में {city_hi} से {state_hi} तक कोई स्पेशल नहीं है, इसलिए यात्रा जल्दी तय करें।"
+   }
+  ],
+  "specials=no|chhath=yes|community=none": [
+   {
+    "en": "Few people from {state} live in {city}, and no festival special is on our list yet, so check early for Diwali and Chhath.",
+    "hi": "{city_hi} में {state_hi} के लोग कम हैं, और अभी हमारी सूची में कोई त्योहार स्पेशल नहीं है, इसलिए दीवाली और छठ के लिए जल्दी पता करें।"
+   },
+   {
+    "en": "Diwali and Chhath are near, and no special from {city} to {state} is on our list yet, so plan your trip early.",
+    "hi": "दीवाली और छठ करीब हैं, और अभी हमारी सूची में {city_hi} से {state_hi} तक कोई स्पेशल नहीं है, इसलिए यात्रा जल्दी तय करें।"
+   }
+  ],
+  "specials=no|chhath=no|community=big": [
+   {
+    "en": "A large community from {state} lives in {city}, and no festival special is on our list yet, so check early for Diwali.",
+    "hi": "{city_hi} में {state_hi} के लोगों का बड़ा समुदाय रहता है, और अभी हमारी सूची में कोई त्योहार स्पेशल नहीं है, इसलिए दीवाली के लिए जल्दी पता करें।"
+   },
+   {
+    "en": "Diwali is near, and no special from {city} to {state} is on our list yet, so plan your trip early.",
+    "hi": "दीवाली करीब है, और अभी हमारी सूची में {city_hi} से {state_hi} तक कोई स्पेशल नहीं है, इसलिए यात्रा जल्दी तय करें।"
+   }
+  ],
+  "specials=no|chhath=no|community=medium": [
+   {
+    "en": "A sizeable community from {state} lives in {city}, and no festival special is on our list yet, so check early for Diwali.",
+    "hi": "{city_hi} में {state_hi} के लोगों का अच्छा-खासा समुदाय है, और अभी हमारी सूची में कोई त्योहार स्पेशल नहीं है, इसलिए दीवाली के लिए जल्दी पता करें।"
+   },
+   {
+    "en": "Diwali is near, and no special from {city} to {state} is on our list yet, so plan your trip early.",
+    "hi": "दीवाली करीब है, और अभी हमारी सूची में {city_hi} से {state_hi} तक कोई स्पेशल नहीं है, इसलिए यात्रा जल्दी तय करें।"
+   }
+  ],
+  "specials=no|chhath=no|community=small": [
+   {
+    "en": "The community from {state} in {city} is small, and no festival special is on our list yet, so check early for Diwali.",
+    "hi": "{city_hi} में {state_hi} के लोगों का समुदाय छोटा है, और अभी हमारी सूची में कोई त्योहार स्पेशल नहीं है, इसलिए दीवाली के लिए जल्दी पता करें।"
+   },
+   {
+    "en": "Diwali is near, and no special from {city} to {state} is on our list yet, so plan your trip early.",
+    "hi": "दीवाली करीब है, और अभी हमारी सूची में {city_hi} से {state_hi} तक कोई स्पेशल नहीं है, इसलिए यात्रा जल्दी तय करें।"
+   }
+  ],
+  "specials=no|chhath=no|community=none": [
+   {
+    "en": "Few people from {state} live in {city}, and no festival special is on our list yet, so check early for Diwali.",
+    "hi": "{city_hi} में {state_hi} के लोग कम हैं, और अभी हमारी सूची में कोई त्योहार स्पेशल नहीं है, इसलिए दीवाली के लिए जल्दी पता करें।"
+   },
+   {
+    "en": "Diwali is near, and no special from {city} to {state} is on our list yet, so plan your trip early.",
+    "hi": "दीवाली करीब है, और अभी हमारी सूची में {city_hi} से {state_hi} तक कोई स्पेशल नहीं है, इसलिए यात्रा जल्दी तय करें।"
+   }
+  ]
+ }
+}

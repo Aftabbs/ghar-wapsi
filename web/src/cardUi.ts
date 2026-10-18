@@ -1,6 +1,13 @@
 // The "Make your card" dialog: choose a city and a home district, preview, share.
 
-import { cardFacts, drawCard, type Migration, type RailTravel, type RouteData } from './card';
+import {
+  cardFacts,
+  drawCard,
+  type Migration,
+  type Narrations,
+  type RailTravel,
+  type RouteData,
+} from './card';
 import type { Special } from './festival';
 
 interface Inputs {
@@ -24,11 +31,15 @@ export function setupCard(inputs: Inputs) {
   const download = $<HTMLAnchorElement>('#card-download');
   const hint = $<HTMLParagraphElement>('#card-hint');
   const close = $<HTMLButtonElement>('#card-close');
+  const narration = $<HTMLElement>('#card-narration');
+  const narrationText = $<HTMLParagraphElement>('#card-narration-en');
+  const narrationHindi = $<HTMLParagraphElement>('#card-narration-hi');
 
   let data: {
     routes: RouteData;
     migration: Migration;
     travel: RailTravel;
+    narrations: Narrations;
     trains: Map<string, string>;
   } | null = null;
   let blob: Blob | null = null;
@@ -36,16 +47,19 @@ export function setupCard(inputs: Inputs) {
   async function load() {
     if (data) return data;
     const get = (name: string) => fetch(`${inputs.dataUrl}${name}`).then((r) => r.json());
-    const [routes, migration, travel, meta] = await Promise.all([
+    const [routes, migration, travel, meta, narrations] = await Promise.all([
       get('routes.json'),
       get('migration-2011.json'),
       get('rail-travel-2023.json'),
       get('trains.meta.json'),
+      // Optional: the card works without the AI-written story lines.
+      get('narrations.json').catch(() => ({ model: '', cards: {} })),
     ]);
     data = {
       routes,
       migration,
       travel,
+      narrations,
       trains: new Map((meta as { n: string; name: string }[]).map((t) => [t.n, t.name])),
     };
     city.replaceChildren(
@@ -77,10 +91,14 @@ export function setupCard(inputs: Inputs) {
     await document.fonts.ready;
     const facts = cardFacts(city.value, district.value, { ...data, specials: inputs.specials() });
     drawCard(canvas, facts, inputs.states() as never, inputs.siteUrl);
+    const story = facts.narration ? `${facts.narration.en} ${facts.narration.hi} ` : '';
     canvas.setAttribute(
       'aria-label',
-      `Card: ${facts.title}. ${facts.lines.map((l) => `${l.text} (${l.source})`).join('. ')}`,
+      `Card: ${facts.title}. ${story}${facts.lines.map((l) => `${l.text} (${l.source})`).join('. ')}`,
     );
+    narration.hidden = !facts.narration;
+    narrationText.textContent = facts.narration ? facts.narration.en : '';
+    narrationHindi.textContent = facts.narration ? facts.narration.hi : '';
     // Make the file before the tap: some browsers refuse to share once an await
     // has passed inside the click handler.
     blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));

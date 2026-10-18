@@ -303,3 +303,26 @@ select {
   border: 1px solid var(--border);
   justify-self: center;
 }
+
+.narration {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent);
+  background: rgba(255, 179, 71, 0.07);
+  border-radius: 8px;
+}
+
+.narration-en {
+  margin: 0 0 6px;
+  color: #ffd27a;
+  font-size: 1.05rem;
+}
+
+.narration-hi {
+  margin: 0 0 8px;
+  font-family: 'Noto Sans Devanagari', 'Nirmala UI', 'Kohinoor Devanagari', system-ui, sans-serif;
+}
+
+.narration figcaption {
+  margin: 0;
+}

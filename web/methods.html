@@ -102,6 +102,14 @@
         <li><strong>People (2011)</strong> is the Census count of people living in the city whose previous home was in that state, for every reason (work, marriage, study, family). Telangana was part of Andhra Pradesh in 2011, so Telangana homes are counted as "undivided Andhra Pradesh".</li>
       </ul>
 
+      <h2 id="ai">The story line on each card</h2>
+      <ul>
+        <li>The short English and Hindi line at the top of a card comes from 32 sentence templates, two for each situation: whether festival specials are running, whether the home state celebrates Chhath, and how large the community in the city is.</li>
+        <li>The templates were drafted with an AI model (<code>gpt-oss-120b</code>, run through Groq) from plain descriptions of each situation, then edited by hand for accuracy and Hindi grammar. The program fills in the city and state names, so every line on the site is one a person has read.</li>
+        <li>The lines contain no figures; the exact numbers on the card come straight from the sources above. A check rejects any template with digits, quantity words, a festival that does not fit, or Hindi not written in Devanagari.</li>
+        <li>Your visit never sends anything to an AI service.</li>
+      </ul>
+
       <h2>Privacy</h2>
       <p>The site has no accounts and stores nothing about you. Visits are counted with
         <a href="https://www.goatcounter.com/">GoatCounter</a>, which uses no cookies. Your card is made in your browser and is not uploaded anywhere.</p>

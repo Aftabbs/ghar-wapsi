@@ -80,6 +80,14 @@ describe('cardFacts', () => {
     expect(facts.lines.at(-1)!.text).toBe(`${formatIndian(expected)} people from Bihar lived in Delhi`);
   });
 
+  it('adds the story line for the city and home state, and none when it is missing', () => {
+    const patna = district('Patna', 'Bihar');
+    const narrations = { model: 'test', cards: { 'bengaluru|Bihar': { en: 'A line.', hi: 'एक पंक्ति।' } } };
+    expect(cardFacts('bengaluru', patna, { ...data, narrations }).narration).toEqual({ en: 'A line.', hi: 'एक पंक्ति।' });
+    expect(cardFacts('delhi', patna, { ...data, narrations }).narration).toBeNull();
+    expect(cardFacts('bengaluru', patna, data).narration).toBeNull();
+  });
+
   it('omits the migration lines for a home in the same state', () => {
     const facts = cardFacts('bengaluru', district('Mysore', 'Karnataka'), data);
     expect(facts.lines.some((l) => l.source.startsWith('Census') || l.source.startsWith('EAC-PM'))).toBe(false);

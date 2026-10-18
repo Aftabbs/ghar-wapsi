@@ -24,10 +24,22 @@ export interface TrainMeta {
   name: string;
 }
 
+export interface Narration {
+  en: string;
+  hi: string;
+}
+
+export interface Narrations {
+  model: string;
+  cards: Record<string, Narration>; // "cityId|home state"
+}
+
 export interface CardFacts {
   title: string;
   from: [number, number];
   to: [number, number];
+  // AI-written summary of the lines below; null if none passed the checks.
+  narration: Narration | null;
   lines: { text: string; source: string }[];
 }
 
@@ -60,6 +72,7 @@ export function cardFacts(
     travel: RailTravel;
     specials: Special[];
     trains: Map<string, string>;
+    narrations?: Narrations;
   },
 ): CardFacts {
   const city = data.routes.cities[cityId];
@@ -132,7 +145,8 @@ export function cardFacts(
     }
   }
 
-  return { title: `${city.name} → ${homeName}`, from, to, lines };
+  const narration = data.narrations?.cards[`${cityId}|${homeState}`] ?? null;
+  return { title: `${city.name} → ${homeName}`, from, to, narration, lines };
 }
 
 // ---- drawing -------------------------------------------------------------
@@ -185,7 +199,7 @@ export function drawCard(canvas: HTMLCanvasElement, facts: CardFacts, states: St
   canvas.height = H;
   const ctx = canvas.getContext('2d')!;
   const font = (size: number, weight = 400) =>
-    `${weight} ${size}px 'Noto Sans', 'Noto Sans Devanagari', system-ui, sans-serif`;
+    `${weight} ${size}px 'Noto Sans', 'Noto Sans Devanagari', 'Nirmala UI', 'Kohinoor Devanagari', system-ui, sans-serif`;
 
   ctx.fillStyle = '#070b16';
   ctx.fillRect(0, 0, W, H);
@@ -198,12 +212,30 @@ export function drawCard(canvas: HTMLCanvasElement, facts: CardFacts, states: St
   const titleLines = wrap(ctx, facts.title, W - 180);
   titleLines.forEach((line, i) => ctx.fillText(line, 90, 235 + i * 84));
 
+  // The story line in English and Hindi sits under the title.
+  let top = 235 + titleLines.length * 84 - 20;
+  if (facts.narration) {
+    ctx.fillStyle = '#ffd27a';
+    ctx.font = font(40, 500);
+    for (const part of wrap(ctx, facts.narration.en, W - 180)) {
+      top += 52;
+      ctx.fillText(part, 90, top);
+    }
+    ctx.fillStyle = '#c9cfdd';
+    ctx.font = font(36, 400);
+    top += 14;
+    for (const part of wrap(ctx, facts.narration.hi, W - 180)) {
+      top += 50;
+      ctx.fillText(part, 90, top);
+    }
+  }
+  top += 30;
+
   // Measure the facts first; the map takes whatever height is left.
-  ctx.font = font(46, 600);
+  ctx.font = font(42, 600);
   const blocks = facts.lines.map((line) => wrap(ctx, line.text, W - 180));
-  const textHeight = blocks.reduce((h, parts) => h + parts.length * 58 + 74, 0);
-  const top = 235 + titleLines.length * 84;
-  const map: Box = { x: 90, y: top, w: 900, h: FOOTER_TOP - textHeight - top - 60 };
+  const textHeight = blocks.reduce((h, parts) => h + parts.length * 52 + 64, 0);
+  const map: Box = { x: 90, y: top, w: 900, h: FOOTER_TOP - textHeight - top - 40 };
 
   ctx.lineWidth = 1.5;
   ctx.strokeStyle = '#22304f';
@@ -246,18 +278,18 @@ export function drawCard(canvas: HTMLCanvasElement, facts: CardFacts, states: St
   }
   ctx.shadowBlur = 0;
 
-  let y = map.y + map.h + 80;
+  let y = map.y + map.h + 60;
   for (const [i, line] of facts.lines.entries()) {
     ctx.fillStyle = '#f3f1ea';
-    ctx.font = font(46, 600);
+    ctx.font = font(42, 600);
     for (const part of blocks[i]) {
       ctx.fillText(part, 90, y);
-      y += 58;
+      y += 52;
     }
     ctx.fillStyle = '#a9b1c6';
-    ctx.font = font(30);
+    ctx.font = font(28);
     ctx.fillText(line.source, 90, y);
-    y += 74;
+    y += 64;
   }
 
   ctx.fillStyle = '#a9b1c6';

@@ -18,9 +18,9 @@ Diwali and Chhath specials heading home, and a card that shows your own journey.
   notice and linked to it. The ones heading home glow gold.
 - **From Bengaluru.** The specials leaving India's largest southern work hub for Bihar,
   Bengal, Jharkhand and Assam.
-- **My journey home.** Pick your city and home district to get a phone-sized card with the
-  fastest direct train, the specials on your route, where people from your state travel, and
-  how many live in your city.
+- **My journey home.** Pick your city and home district to get a phone-sized card: a short
+  story line in English and Hindi, then the fastest direct train, the specials on your route,
+  where people from your state travel, and how many live in your city.
 
 ## Data
 
@@ -57,6 +57,8 @@ cd pipeline
 python -m ghar.fetch          # DataMeet, OpenStreetMap, Census 2011 tables
 python -m ghar.tag_extract    # Trains at a Glance 2026 PDFs -> table cells (about 6 minutes)
 python -m ghar.build          # writes web/public/data and pipeline/report.json
+python -m ghar.narrate        # optional: story lines via Groq (GROQ_API_KEY in .env)
+python -m ghar.narrate --from-cache   # rebuild story lines from data/narrations, no key
 ```
 
 ```bash

@@ -1,0 +1,32 @@
+You write templates for the one-line story at the top of a person's "journey home" card on a
+public map of India's festival trains. Exact figures are printed underneath the line, so the line
+gives the meaning in plain, warm words.
+
+Each template has slots that the program fills in:
+- English: {city} (where the person lives, e.g. Bengaluru) and {state} (their home state, e.g. Bihar).
+- Hindi: {city_hi} and {state_hi}, the same names in Hindi.
+Use each slot exactly once in its language. Write the sentence so it reads correctly for any
+Indian city and state name.
+
+Rules:
+- Use only the facts given, and use at least two of them. Add nothing else: no statistics,
+  history, rankings, jobs, reasons for moving, times, years, or claims about particular people.
+- If no festival special is on the verified list, do not suggest one is running and do not say
+  none exists: say none is on the list yet, and suggest checking early.
+- No numbers, digits or quantity words (no lakh, crore, thousand, percent).
+- Name only the festivals listed. Keep imagery short, sensible and true to the festival: diyas
+  lit at home for Diwali; the ghats and the setting sun for Chhath. Nothing happens on the train
+  except travelling.
+- English: one sentence, at most 22 words. Plain, warm, natural. No exclamation marks, hashtags
+  or emoji. Do not start with "You" or "Special trains". Avoid clichés ("loved ones", "embrace").
+- Hindi: the same meaning in correct, natural, everyday Hindi (Devanagari). Watch grammar and
+  gender: समुदाय is masculine (बड़ा समुदाय); दीये are masculine (दीवाली के दीये). Put the names where
+  case endings do not change them, for example "{state_hi} के लोग", "{city_hi} में",
+  "{city_hi} से {state_hi} तक". Use प्रार्थना or अर्घ्य for Chhath, never दुआ.
+- The three templates must differ from each other in wording and structure.
+
+Examples of the style (their facts may differ from yours):
+EN: This Chhath, festival specials are running from {city} to {state}, carrying a large community home to the ghats.
+HI: इस छठ पर {city_hi} से {state_hi} तक त्योहार स्पेशल ट्रेनें चल रही हैं, जो एक बड़े समुदाय को घाटों तक घर ले जा रही हैं।
+EN: Few people from {state} live in {city}, and no festival special is on the list yet, so check early before Diwali.
+HI: {city_hi} में {state_hi} के लोग कम हैं और अभी सूची में कोई त्योहार स्पेशल नहीं है, इसलिए दीवाली से पहले जल्दी पता करें।

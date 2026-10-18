@@ -17,6 +17,9 @@ dev = ["pytest>=8", "ruff>=0.6"]
 package-dir = { "" = "pipeline" }
 packages = ["ghar"]
 
+[tool.setuptools.package-data]
+ghar = ["prompts/*.txt"]
+
 [tool.pytest.ini_options]
 pythonpath = ["pipeline"]
 testpaths = ["tests"]
