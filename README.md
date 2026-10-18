@@ -18,6 +18,9 @@ Diwali and Chhath specials heading home, and a card that shows your own journey.
   notice and linked to it. The ones heading home glow gold.
 - **From Bengaluru.** The specials leaving India's largest southern work hub for Bihar,
   Bengal, Jharkhand and Assam.
+- **Explore.** Switch to satellite imagery with state, district and station names, then tap
+  a train for its timings, stops, days, classes and an estimated fare range, or tap a
+  station, district or state for its trains, specials and where people travel.
 - **My journey home.** Pick your city and home district to get a phone-sized card: a short
   story line in English and Hindi, then the fastest direct train, the specials on your route,
   where people from your state travel, and how many live in your city.
@@ -30,6 +33,8 @@ Diwali and Chhath specials heading home, and a card that shows your own journey.
 | Festival specials | Zonal railway press releases on `*.indianrailways.gov.in` | Checked 17 Oct 2026 |
 | Rail travel between states | [EAC-PM, *400 Million Dreams*](https://eacpm.gov.in/wp-content/uploads/2024/12/FINAL-Internal-Migration-Project.docx-Publication-Version.pdf), Table 7 | 2023 |
 | People living in another state | Census of India, Table D-02 | 2011, the latest count |
+| Fares (estimates) | Trains at a Glance 2026 fare tables + Commercial Circular 24/2025 | w.e.f. 1 Jul 2025, revised 26 Dec 2025 |
+| Satellite imagery | [Sentinel-2 cloudless 2024](https://cloudless.eox.at) by EOX, CC BY-NC-SA 4.0 | 2024 |
 | Station locations | [DataMeet](https://github.com/datameet/railways) + [OpenStreetMap](https://www.openstreetmap.org/copyright) | OSM Oct 2026 |
 | Boundaries | Survey of India outline via [DataMeet maps](https://github.com/datameet/maps) | — |
 

@@ -37,3 +37,17 @@ for (const path of ['./', './methods.html']) {
     expect(results.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
   });
 }
+
+test('explore mode loads with the imagery credit and passes accessibility checks', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.locator('#festival')).toBeEnabled({ timeout: 30_000 });
+  await page.click('#explore');
+  await expect(page.locator('#status')).toContainText('Tap a train', { timeout: 60_000 });
+  await expect(page.locator('#satellite-credit')).toBeVisible();
+  // Zoom in so stations, district outlines and labels are on screen for the scan.
+  await page.evaluate(() => (window as unknown as { gharMap: { flyTo: (a: number, b: number, c: number) => void } }).gharMap.flyTo(77.5696, 12.9782, 12));
+  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze();
+  expect(results.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
+  await page.click('#explore');
+  await expect(page.locator('#satellite-credit')).toBeHidden();
+});

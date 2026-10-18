@@ -12,6 +12,13 @@ import {
   summary,
 } from './festival';
 import { setupCard } from './cardUi';
+import {
+  exploreBaseLayers,
+  exploreTopLayers,
+  loadExplore,
+  panelFor,
+  renderPanel,
+} from './exploreUi';
 import './style.css';
 
 const DATA = `${import.meta.env.BASE_URL}data/`;
@@ -42,6 +49,11 @@ const ui = {
   festival: document.querySelector<HTMLButtonElement>('#festival')!,
   bengaluru: document.querySelector<HTMLButtonElement>('#bengaluru')!,
   legend: document.querySelector<HTMLParagraphElement>('#legend')!,
+  explore: document.querySelector<HTMLButtonElement>('#explore')!,
+  info: document.querySelector<HTMLElement>('#info')!,
+  infoBody: document.querySelector<HTMLElement>('#info-body')!,
+  infoClose: document.querySelector<HTMLButtonElement>('#info-close')!,
+  credit: document.querySelector<HTMLElement>('#satellite-credit')!,
 };
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -57,6 +69,9 @@ const state = {
   bengaluru: false,
   specials: [] as Special[],
   specialTrips: [] as SpecialTrip[],
+  explore: false,
+  zoom: 0,
+  meta: [] as { n: string }[],
 };
 
 // Mainland India plus the Northeast; islands may sit off the fitted view.
@@ -82,7 +97,7 @@ function initialView(): MapViewState {
     INDIA_BOUNDS,
     { padding },
   );
-  return { longitude, latitude, zoom, minZoom: Math.min(zoom, 3), maxZoom: 9 };
+  return { longitude, latitude, zoom, minZoom: Math.min(zoom, 3), maxZoom: 12 };
 }
 
 function tripsLayer(id: string, trips: TripBuffers, color: [number, number, number], width: number) {
@@ -101,7 +116,11 @@ function tripsLayer(id: string, trips: TripBuffers, color: [number, number, numb
     currentTime: state.minute,
     trailLength: state.light ? TRAIL_MIN.light : TRAIL_MIN.full,
     getColor: color,
-    widthMinPixels: width,
+    // In explore mode trains are wider and can be tapped.
+    widthMinPixels: state.explore ? width + 2 : width,
+    pickable: state.explore,
+    autoHighlight: state.explore,
+    highlightColor: [255, 255, 255, 255],
     capRounded: true,
     jointRounded: true,
     fadeTrail: true,
@@ -112,7 +131,9 @@ function tripsLayer(id: string, trips: TripBuffers, color: [number, number, numb
 
 function layers() {
   const out = [];
-  if (state.states) {
+  if (state.explore) {
+    out.push(...exploreBaseLayers(state.states, state.zoom));
+  } else if (state.states) {
     out.push(
       new GeoJsonLayer({
         id: 'states',
@@ -128,6 +149,7 @@ function layers() {
   if (state.rest && !state.light) out.push(tripsLayer('rest', state.rest, [255, 140, 70], 1));
   if (state.long) out.push(tripsLayer('long', state.long, [255, 196, 110], 2));
   if (state.festival) out.push(...festivalLayers());
+  if (state.explore && state.states) out.push(...exploreTopLayers(state.states as never, state.zoom));
   return out;
 }
 
@@ -179,7 +201,66 @@ const deck = new Deck({
   initialViewState: initialView(),
   controller: { dragRotate: false, touchRotate: false },
   layers: [],
+  // A forgiving tap target: station dots are small, especially under a finger.
+  pickingRadius: 12,
+  onViewStateChange: ({ viewState }) => {
+    // Labels and districts depend on zoom; re-render when it crosses a step.
+    const zoom = Math.round((viewState as { zoom: number }).zoom * 4) / 4;
+    if (zoom !== state.zoom) {
+      state.zoom = zoom;
+      render();
+    }
+  },
+  getCursor: ({ isHovering }) => (isHovering && state.explore ? 'pointer' : 'grab'),
+  onClick: (info) => {
+    if (!state.explore) return;
+    const panel = panelFor(info, {
+      trainNumber: (layerId, index) => {
+        const trips = layerId === 'long' ? state.long : state.rest;
+        const meta = trips ? state.meta[trips.trainIndex[index]] : undefined;
+        return meta?.n ?? null;
+      },
+      specials: state.specials,
+      minute: state.minute,
+    });
+    if (!panel) return;
+    renderPanel(ui.infoBody, panel);
+    ui.info.hidden = false;
+    ui.infoClose.focus();
+  },
 });
+
+// A small hook for scripted views (tests and the launch video).
+(window as unknown as { gharMap: object }).gharMap = {
+  flyTo: (longitude: number, latitude: number, zoom: number) => {
+    deck.setProps({ initialViewState: { ...initialView(), longitude, latitude, zoom } });
+    // Setting the view directly does not raise onViewStateChange, so record the zoom here.
+    state.zoom = zoom;
+    render();
+  },
+  explore: (on: boolean) => setExplore(on),
+  zoom: () => state.zoom,
+  layerIds: () => layers().map((l) => l.id),
+};
+
+async function setExplore(on: boolean) {
+  state.explore = on;
+  ui.explore.setAttribute('aria-pressed', String(on));
+  ui.credit.hidden = !on;
+  if (on) {
+    ui.status.textContent = 'Loading places and timetable…';
+    const [, meta] = await Promise.all([
+      loadExplore(DATA),
+      state.meta.length ? state.meta : fetch(`${DATA}trains.meta.json`).then((r) => r.json()),
+    ]);
+    state.meta = meta;
+    ui.status.textContent = 'Tap a train, station, district or state to learn about it.';
+  } else {
+    ui.info.hidden = true;
+    ui.status.textContent = '';
+  }
+  render();
+}
 
 function render() {
   deck.setProps({ layers: layers() });
@@ -241,6 +322,17 @@ function setPlaying(playing: boolean) {
 
 ui.play.addEventListener('click', () => setPlaying(!state.playing));
 ui.festival.addEventListener('click', () => setFestival(!state.festival));
+ui.explore.addEventListener('click', () => setExplore(!state.explore));
+ui.infoClose.addEventListener('click', () => {
+  ui.info.hidden = true;
+  ui.explore.focus();
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !ui.info.hidden) {
+    ui.info.hidden = true;
+    ui.explore.focus();
+  }
+});
 ui.bengaluru.addEventListener('click', () => setBengaluru(!state.bengaluru));
 ui.time.addEventListener('input', () => {
   setPlaying(false);

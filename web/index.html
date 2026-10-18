@@ -29,6 +29,7 @@
         <div class="modes" role="group" aria-label="What to show">
           <button id="festival" type="button" aria-pressed="false" disabled>Festival specials</button>
           <button id="bengaluru" type="button" aria-pressed="false" disabled>From Bengaluru</button>
+          <button id="explore" type="button" aria-pressed="false">Explore</button>
           <button id="make-card" type="button" class="primary">Make your card</button>
         </div>
         <div class="controls">
@@ -40,6 +41,11 @@
         </div>
         <p id="status" class="status" role="status" aria-live="polite">Loading trains…</p>
       </section>
+
+      <aside id="info" class="info" aria-labelledby="info-title" aria-live="polite" hidden>
+        <button id="info-close" type="button" class="info-close" aria-label="Close details">×</button>
+        <div id="info-body"></div>
+      </aside>
 
       <section id="summary" class="visually-hidden" aria-label="Text summary">
         <h2>What the map shows</h2>
@@ -79,7 +85,7 @@
       </dialog>
     </main>
     <footer class="attribution">
-      Timings: Trains at a Glance 2026, Ministry of Railways · Festival specials: zonal railway notices · © OpenStreetMap contributors · Survey of India boundary
+      <span id="satellite-credit" hidden>Imagery: Sentinel-2 cloudless 2024 by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2024), CC BY-NC-SA 4.0 · </span>Timings: Trains at a Glance 2026, Ministry of Railways · Festival specials: zonal railway notices · © OpenStreetMap contributors · Survey of India boundary
     </footer>
     <script type="module" src="/src/main.ts"></script>
   </body>

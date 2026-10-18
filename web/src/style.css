@@ -326,3 +326,89 @@ select {
 .narration figcaption {
   margin: 0;
 }
+
+.info {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: min(380px, calc(100vw - 32px));
+  max-height: calc(100dvh - 120px);
+  overflow: auto;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(7, 11, 22, 0.94);
+  z-index: 5;
+}
+
+.info h2 {
+  margin: 2px 0 10px;
+  font-size: 1.15rem;
+  padding-right: 36px;
+}
+
+.panel-kind {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.info dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+}
+
+.info dt {
+  color: var(--muted);
+}
+
+.info dd {
+  margin: 0;
+}
+
+.info details summary {
+  cursor: pointer;
+  min-height: 32px;
+}
+
+.info ol {
+  margin: 6px 0 10px;
+  padding-left: 20px;
+  font-size: 0.88rem;
+}
+
+.panel-note,
+.panel-source {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.info a {
+  color: var(--focus);
+}
+
+.info-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  min-width: 44px;
+  font-size: 1.4rem;
+  padding: 0;
+}
+
+@media (max-width: 759px) {
+  .info {
+    top: auto;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: auto;
+    max-height: 55dvh;
+    border-radius: 14px 14px 0 0;
+  }
+}
