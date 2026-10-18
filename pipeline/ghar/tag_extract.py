@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 FOLDER = ROOT / "data" / "raw" / "tag2026"
 BASE = "https://indianrailways.gov.in/railwayboard/uploads/directorate/coaching/TAG_2026/"
 TABLES = range(1, 98)
-EXTRA = ["Station_Code_Index.pdf"]
+EXTRA = ["Station_Code_Index.pdf", "Fares.pdf"]
 USER_AGENT = "ghar-wapsi-pipeline/0.1 (+https://github.com/Aftabbs/ghar-wapsi)"
 
 

@@ -37,8 +37,11 @@ class Trip:
 
 
 # Abbreviations that stay in capitals when a name is converted from ALL CAPS.
-KEEP_CAPS = {"SF", "AC", "LTT", "CST", "CSMT", "DMU", "MEMU", "DEMU", "EMU", "MMTS", "SMVT", "NG"}
-TWO_LETTER_WORDS = {"DA", "KI", "RD", "JN", "KA", "KE"}
+KEEP_CAPS = {
+    "SF", "AC", "LTT", "CST", "CSMT", "DMU", "MEMU", "DEMU", "EMU", "MMTS", "SMVT", "NG",
+    "KSR", "MGR", "SSS", "NSCB", "MMCT",
+}  # fmt: skip
+TWO_LETTER_WORDS = {"DA", "KI", "RD", "JN", "KA", "KE", "PT"}
 
 
 def tidy_name(name: str) -> str:

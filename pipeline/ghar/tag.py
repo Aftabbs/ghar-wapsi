@@ -99,8 +99,9 @@ def normalise(name: str) -> str:
     return " ".join(replace.get(w, w) for w in words)
 
 
-def station_index(pdf_path: Path) -> dict[str, str]:
-    """TAG's Station Code Index: about 900 principal stations, four columns per page."""
+def station_index(pdf_path: Path, display: dict[str, str] | None = None) -> dict[str, str]:
+    """TAG's Station Code Index: about 900 principal stations, four columns per page.
+    If `display` is given, it is filled with code -> the station's printed 2026 name."""
     import pdfplumber
 
     out: dict[str, str] = {}
@@ -127,6 +128,8 @@ def station_index(pdf_path: Path) -> dict[str, str]:
                     if code and re.fullmatch(r"[A-Z]{1,5}", code):
                         full = f"{pending} {name}".strip()
                         out[normalise(full)] = code
+                        if display is not None and len(full) > 2:
+                            display.setdefault(code, full)
                         pending = ""
                     elif name and not code:
                         # A name that wraps: the code sits on the first line, so this
@@ -134,6 +137,8 @@ def station_index(pdf_path: Path) -> dict[str, str]:
                         last = next(reversed(out), None)
                         if last is not None:
                             out[normalise(f"{last} {name}")] = out[last]
+                            if display is not None and out[last] in display:
+                                display[out[last]] = f"{display[out[last]]} {name}"
     return out
 
 
@@ -219,7 +224,9 @@ def _split_block(text: str) -> tuple[list[str], str, list[str]]:
     return left, " ".join(tokens), right
 
 
-def read_table(rows: list[list], report: Counter, names: dict[str, str] | None = None):
+def read_table(
+    rows: list[list], report: Counter, names: dict | None = None, info: dict | None = None
+):
     """Cells per train number found in one extracted table (one list per column)."""
     counts = [sum(bool(TRAIN_NUMBER.search(c or "")) for c in r) for r in rows]
     if not counts or max(counts) < 1:
@@ -298,13 +305,59 @@ def read_table(rows: list[list], report: Counter, names: dict[str, str] | None =
                 flags = (["a", "d"] if len(times) == 2 else ["d"] * len(times))[: len(times)]
             columns[col].append(Cell(name, list(zip(flags, times, strict=False)), r))
     name_row = rows[number_row - 1] if number_row > 0 else []
+    header = _header_rows(rows, number_row, set(train_cols))
     for col, numbers_in_col in train_cols.items():
         if columns[col]:
             for number in numbers_in_col:
                 out[number].append(columns[col])
                 if names is not None and col < len(name_row) and name_row[col]:
                     names.setdefault(number, " ".join(name_row[col].split()))
+                if info is not None:
+                    _record_info(info, number, col, header)
     return out
+
+
+def _header_rows(rows: list[list], number_row: int, train_cols: set[int]) -> dict:
+    """The class, from-table and days-of-departure rows above the stations. Their labels
+    can sit in any column that is not a train column."""
+    found = {}
+    for row in rows[number_row + 1 : number_row + 8]:
+        label = " ".join((c or "") for i, c in enumerate(row) if i not in train_cols).lower()
+        for key, marker in (("classes", "class of"), ("from", "from table"), ("days", "days of")):
+            if marker in label and key not in found:
+                found[key] = row
+    return found
+
+
+DAY_CODES = {"M": "Mon", "TU": "Tue", "W": "Wed", "TH": "Thu", "F": "Fri", "SA": "Sat", "SU": "Sun"}
+DAY_TOKEN = re.compile(r"\b(Tu|Th|Sa|Su|M|W|F)\b")
+CLASS_TOKEN = re.compile(r"[0-9A-Z]{1,3}")
+
+
+def _days(text: str) -> list[str] | None:
+    text = " ".join((text or "").split())
+    if not text:
+        return None
+    if "daily" in text.lower():
+        return ["Daily"]
+    days = [DAY_CODES[t.upper()] for t in DAY_TOKEN.findall(text)]
+    return list(dict.fromkeys(days)) or None
+
+
+def _record_info(info: dict, number: str, col: int, header: dict) -> None:
+    """Days and classes for a train, preferring the table where it starts: there the
+    'From Table No.' cell is empty, and the days are those of its origin station."""
+
+    def cell(key: str) -> str:
+        row = header.get(key)
+        return (row[col] if row and col < len(row) else "") or ""
+
+    starts_here = "from" in header and not cell("from").strip()
+    entry = info.get(number)
+    if entry and entry["origin_table"] and not starts_here:
+        return
+    classes = [c for c in re.split(r"[,\s]+", cell("classes")) if CLASS_TOKEN.fullmatch(c)]
+    info[number] = {"days": _days(cell("days")), "classes": classes, "origin_table": starts_here}
 
 
 def _is_flag_column(rows: list[list], col: int) -> bool:
@@ -428,6 +481,8 @@ def _union(a, b):
 class TagTrain:
     number: str
     name: str
+    days: list[str] | None
+    classes: list[str]
     stops: list[tuple[str, float, float]]  # code, arrival minute, departure minute
 
 
@@ -489,11 +544,12 @@ def parse(
     files = json.loads(tables_json.read_text(encoding="utf-8"))["files"]
     segments: dict[str, list[list[Cell]]] = defaultdict(list)
     names: dict[str, str] = {}
+    info: dict[str, dict] = {}
     for pages in files.values():
         for page in pages:
             for rows in page["tables"]:
                 report["tables"] += 1
-                for number, columns in read_table(rows, report, names).items():
+                for number, columns in read_table(rows, report, names, info).items():
                     segments[number].extend(columns)
 
     gazetteer = Gazetteer.build(stations, index)
@@ -514,7 +570,16 @@ def parse(
         if not _plausible(matched, gazetteer):
             report["trains_dropped_implausible_speed"] += 1
             continue
-        trains.append(TagTrain(number, names.get(number, number), matched))
+        details = info.get(number, {})
+        trains.append(
+            TagTrain(
+                number,
+                names.get(number, number),
+                details.get("days"),
+                details.get("classes", []),
+                matched,
+            )
+        )
     report["trains_found"] = len(segments)
     report["trains_out"] = len(trains)
     return trains, dict(report)

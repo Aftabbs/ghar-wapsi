@@ -71,3 +71,30 @@ def current_state_locator(raw: Path):
         return names[index]
 
     return locate
+
+
+def build_districts(raw: Path, out: Path, tolerance: float = 0.01) -> dict:
+    """Census 2011 district outlines for explore mode, keyed by Census district code."""
+    features = json.loads((raw / "districts-2011.geojson").read_text(encoding="utf-8"))["features"]
+    geoms = [shape(f["geometry"]).buffer(0) for f in features]
+    simplified = shapely.coverage_simplify(geoms, tolerance)
+    collection = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "code": int(f["properties"]["censuscode"]),
+                    "name": f["properties"]["DISTRICT"],
+                },
+                "geometry": {
+                    "type": mapping(geom)["type"],
+                    "coordinates": _round(mapping(geom)["coordinates"]),
+                },
+            }
+            for f, geom in zip(features, simplified, strict=True)
+            if not geom.is_empty
+        ],
+    }
+    out.write_bytes(json.dumps(collection, separators=(",", ":")).encode("utf-8"))
+    return {"file": out.name, "districts": len(collection["features"]), "bytes": out.stat().st_size}

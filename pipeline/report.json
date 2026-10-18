@@ -185,7 +185,15 @@
       "p5_ratio": 0.884,
       "p95_ratio": 1.106,
       "share_within_25pct": 0.978
-    }
+    },
+    "rail_distance_calibration": {
+      "factor": 1.1062,
+      "trains": 588,
+      "abs_error_p50": 0.03,
+      "abs_error_p80": 0.061
+    },
+    "explore_trains": 2626,
+    "explore_stations": 867
   },
   "specials": {
     "rows_in": 113,
@@ -214,6 +222,16 @@
       "bytes": 246746
     },
     {
+      "file": "india-districts.json",
+      "districts": 641,
+      "bytes": 721198
+    },
+    {
+      "file": "fares.json",
+      "bytes": 32445,
+      "categories": 7
+    },
+    {
       "file": "migration-2011.json",
       "bytes": 389999,
       "states": 35,
@@ -232,6 +250,10 @@
     {
       "file": "routes.json",
       "bytes": 146566
+    },
+    {
+      "file": "explore.json",
+      "bytes": 873600
     }
   ]
 }

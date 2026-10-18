@@ -15,6 +15,8 @@ from . import (
     census,
     crosscheck,
     eacpm,
+    explore,
+    fares,
     pack,
     routes,
     specials,
@@ -42,7 +44,8 @@ def main() -> int:
     # Train timings: Trains at a Glance 2026 (Railway Board), parsed from its PDFs.
     tag_files = tag_extract.extract(tag_extract.download())
     del tag_files  # extract() caches the cells; tag.parse reads the cache
-    index = tag.station_index(RAW / "tag2026" / "Station_Code_Index.pdf")
+    official_names: dict[str, str] = {}
+    index = tag.station_index(RAW / "tag2026" / "Station_Code_Index.pdf", official_names)
     station_rows = [{"code": s.code, "name": s.name, "lon": s.lon, "lat": s.lat} for s in gazetteer]
     tag_trains, tag_report = tag.parse(RAW / "tag2026" / "tables.json", index, station_rows)
     trips, train_report = trains.from_tag(tag_trains, located)
@@ -75,6 +78,8 @@ def main() -> int:
         pack.pack(long_trips, train_ids, OUT / "trains-long.bin"),
         pack.pack(other_trips, train_ids, OUT / "trains-rest.bin"),
         boundaries.build(RAW, OUT / "india-states.json"),
+        boundaries.build_districts(RAW, OUT / "india-districts.json", tolerance=0.025),
+        fares.write(fares.parse(RAW / "tag2026" / "Fares.pdf"), OUT / "fares.json"),
         census.write(census.parse(RAW / "census-d02"), OUT / "migration-2011.json"),
         census.write_json(
             eacpm.parse(eacpm.fetch(RAW / "eacpm-2024.pdf")), OUT / "rail-travel-2023.json"
@@ -108,6 +113,14 @@ def main() -> int:
         for d in sorted(districts, key=lambda d: (d.state, d.name))
     }
     files.append(routes.write(route_data, OUT / "routes.json"))
+
+    distance = explore.calibrate_distance(trips, RAW / "trains.json")
+    explore_data, explore_report = explore.build(
+        tag_trains, trips, gazetteer, distance["factor"], official_names
+    )
+    files.append(explore.write(explore_data, OUT / "explore.json"))
+    train_report["rail_distance_calibration"] = distance
+    train_report.update(explore_report)
 
     report = {
         "routes": route_report,
