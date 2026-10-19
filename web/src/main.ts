@@ -273,7 +273,9 @@ function showRoute(route: Route | null) {
       ],
       8,
     );
-    deck.setProps({ initialViewState: { ...view, transitionDuration: reducedMotion ? 0 : 900, transitionInterpolator: new FlyToInterpolator() } });
+    // No fly-in for reduced motion or a background tab, where animation frames are paused.
+    const animate = !reducedMotion && !document.hidden;
+    deck.setProps({ initialViewState: animate ? { ...view, transitionDuration: 900, transitionInterpolator: new FlyToInterpolator() } : view });
     ui.legend.textContent = route.roads.length
       ? 'Your train in gold, the road part in pale gold. Every other train is dimmed.'
       : 'Your train in gold. Every other train is dimmed.';
@@ -328,6 +330,10 @@ const deck = new Deck({
   },
   explore: (on: boolean) => setExplore(on),
   zoom: () => state.zoom,
+  view: () => {
+    const v = deck.getViewports()[0] as unknown as { longitude: number; latitude: number; zoom: number };
+    return { longitude: v.longitude, latitude: v.latitude, zoom: v.zoom };
+  },
   layerIds: () => layers().map((l) => l.id),
 };
 

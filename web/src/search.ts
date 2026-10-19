@@ -164,7 +164,9 @@ export function setupSearch(inputs: Inputs) {
       labels: [a.name, b.name],
     });
     inputs.onSearch(spoken(a.state), spoken(b.state));
-    result.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    // Scroll only the panel: scrollIntoView would also shift the page and push the map away.
+    const panel = result.closest<HTMLElement>('.panel')!;
+    panel.scrollTo({ top: result.offsetTop - 8, behavior: 'smooth' });
   }
 
   async function openCard() {
