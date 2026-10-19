@@ -1,11 +1,11 @@
-# Homeward
+# Native Place
 
-**Find your train home, from anywhere in India.** Type where you live and where home is.
-Homeward gives the fastest train in the official 2026 timetable, an estimated fare range,
-any special trains running this season, and how many people make the same move, with a
-source next to every figure.
+**Going to native? Find your train.** Type where you live and your native place. Native Place
+gives the fastest train in the official 2026 timetable, an estimated fare range, any special
+trains running this season, and how many people make the same trip, with a source next to
+every figure.
 
-**Live:** [aftabbs.github.io/homeward](https://aftabbs.github.io/homeward/)
+**Live:** [aftabbs.github.io/native-place](https://aftabbs.github.io/native-place/)
 
 <p>
   <img src="docs/screenshot-laptop.png" alt="The search panel showing Bengaluru to Patna: the fastest direct train, fares and special trains, with the route lit in gold on a dark map of India" width="68%">
@@ -27,7 +27,8 @@ source next to every figure.
   Now: Diwali and Chhath 2026. Each holiday rush adds its own.
 - **You are not alone.** The share of long-distance train trips between the two states (2023)
   and how many people from home live where you do (Census 2011).
-- **A card to share** with every line sourced, and a link that opens the same answer.
+- **A card to share** with every line sourced, and a link that opens the same answer. Shared
+  links show a preview image on WhatsApp and social apps.
 - **The map.** Every train in the timetable moving across one day in 60 seconds; your route
   lights up and the rest dims. Explore mode adds satellite imagery and tap-for-details panels
   for trains, stations, districts and states.
@@ -46,7 +47,7 @@ source next to every figure.
 | Boundaries | Survey of India outline via [DataMeet maps](https://github.com/datameet/maps) | — |
 
 Census 2027 migration tables are not yet published; the answer shows the 2011 count with its
-date beside the 2023 rail-travel figure. The [methods page](https://aftabbs.github.io/homeward/methods.html)
+date beside the 2023 rail-travel figure. The [methods page](https://aftabbs.github.io/native-place/methods.html)
 explains every check and limit.
 
 ### How the timetable is checked
@@ -106,7 +107,7 @@ cd web && npm run build && npx playwright test   # browser flow and WCAG 2.2 AA 
 
 ## Found a mistake?
 
-[Open an issue](https://github.com/Aftabbs/homeward/issues) with the train number or district
+[Open an issue](https://github.com/Aftabbs/native-place/issues) with the train number or district
 and the source that shows the right value. Always confirm a journey on NTES or IRCTC before you
 travel.
 

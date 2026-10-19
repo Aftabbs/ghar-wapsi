@@ -11,7 +11,7 @@ import urllib.request
 from pathlib import Path
 
 RAW = Path(__file__).resolve().parents[2] / "data" / "raw"
-USER_AGENT = "homeward-pipeline/0.1 (+https://github.com/Aftabbs/homeward)"
+USER_AGENT = "native-place-pipeline/0.1 (+https://github.com/Aftabbs/native-place)"
 
 DATAMEET_RAILWAYS = "https://raw.githubusercontent.com/datameet/railways/master/"
 DATAMEET_MAPS = "https://raw.githubusercontent.com/datameet/maps/master/"

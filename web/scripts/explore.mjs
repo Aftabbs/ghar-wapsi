@@ -12,7 +12,7 @@ await page.waitForFunction(() => !document.querySelector('#festival').disabled, 
 await page.click('#play');
 await page.click('#explore');
 await page.waitForFunction(() => document.querySelector('#status').textContent.startsWith('Tap'), null, { timeout: 60000 });
-const fly = (lon, lat, zoom) => page.evaluate(([a, b, c]) => window.homewardMap.flyTo(a, b, c), [lon, lat, zoom]);
+const fly = (lon, lat, zoom) => page.evaluate(([a, b, c]) => window.nativePlaceMap.flyTo(a, b, c), [lon, lat, zoom]);
 const panel = async () => (await page.textContent('#info-body')).replace(/\s+/g, ' ').trim().slice(0, 420);
 const tap = async (x, y, name) => {
   await page.mouse.click(x, y);

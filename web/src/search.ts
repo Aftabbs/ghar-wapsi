@@ -3,7 +3,7 @@
 import { type Answer, answer } from './answer';
 import { drawCard } from './card';
 import { CLASS_NAMES } from './explore';
-import { loadExplore } from './exploreUi';
+import { loadSearch } from './exploreUi';
 import type { Special } from './festival';
 import { legPath } from './journey';
 import { buildPlaces, type Place, searchPlaces, spoken } from './places';
@@ -99,7 +99,7 @@ export function setupSearch(inputs: Inputs) {
   let blob: Blob | null = null;
 
   async function ready() {
-    const loaded = await loadExplore(inputs.dataUrl);
+    const loaded = await loadSearch(inputs.dataUrl);
     if (!places) {
       places = buildPlaces(loaded.places, loaded.explore);
       list.replaceChildren(
@@ -183,7 +183,7 @@ export function setupSearch(inputs: Inputs) {
     blob = await new Promise<Blob | null>((done) => canvas.toBlob(done, 'image/png'));
     if (!blob) return;
     download.href = URL.createObjectURL(blob);
-    download.download = `homeward-${p.name}-${q.name}.png`.toLowerCase().replace(/[^a-z0-9.-]+/g, '-');
+    download.download = `native-place-${p.name}-${q.name}.png`.toLowerCase().replace(/[^a-z0-9.-]+/g, '-');
     download.hidden = false;
     const file = new File([blob], download.download, { type: 'image/png' });
     share.disabled = !(navigator.canShare && navigator.canShare({ files: [file] }));
@@ -194,6 +194,14 @@ export function setupSearch(inputs: Inputs) {
     event.preventDefault();
     search();
   });
+  // One tap shows what an answer looks like.
+  for (const chip of document.querySelectorAll<HTMLButtonElement>('.chip')) {
+    chip.addEventListener('click', () => {
+      from.value = chip.dataset.from!;
+      to.value = chip.dataset.to!;
+      void search();
+    });
+  }
   $<HTMLButtonElement>('#swap').addEventListener('click', () => {
     [from.value, to.value] = [to.value, from.value];
   });
@@ -204,7 +212,7 @@ export function setupSearch(inputs: Inputs) {
   share.addEventListener('click', () => {
     if (!blob || !current) return;
     const file = new File([blob], download.download, { type: 'image/png' });
-    navigator.share({ files: [file], title: 'Homeward', text: `${current.answer.title} · ${location.href}` }).catch(() => {
+    navigator.share({ files: [file], title: 'Native Place', text: `${current.answer.title} · ${location.href}` }).catch(() => {
       /* the person closed the share sheet */
     });
   });

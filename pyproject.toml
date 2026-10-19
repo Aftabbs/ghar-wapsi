@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "homeward-pipeline"
+name = "native-place-pipeline"
 version = "0.1.0"
-description = "Data pipeline for Homeward: find your train home, from the official Indian Railways timetable"
+description = "Data pipeline for Native Place: find your train to native, from the official Indian Railways timetable"
 requires-python = ">=3.10"
 license = "MIT"
 dependencies = ["shapely>=2.0", "openpyxl>=3.1"]

@@ -74,7 +74,7 @@ export function drawCard(canvas: HTMLCanvasElement, facts: CardFacts, states: St
 
   ctx.fillStyle = '#ffb347';
   ctx.font = font(40, 600);
-  ctx.fillText('HOMEWARD · MY TRAIN HOME', 90, 140);
+  ctx.fillText('NATIVE PLACE · MY TRAIN TO NATIVE', 90, 140);
   ctx.fillStyle = '#f3f1ea';
   ctx.font = font(72, 700);
   const titleLines = wrap(ctx, facts.title, W - 180);

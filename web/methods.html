@@ -4,15 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
-    <title>How this was made · Homeward</title>
-    <meta name="description" content="Sources, checks and limits behind Homeward, the train-home finder." />
+    <title>How this was made · Native Place</title>
+    <meta name="description" content="Sources, checks and limits behind Native Place, the find-your-train-home site." />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%230b1020'/><circle cx='16' cy='16' r='5' fill='%23ffb347'/></svg>" />
     <link rel="stylesheet" href="/src/methods.css" />
     <script data-goatcounter="https://aftab.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
   </head>
   <body>
     <main class="doc">
-      <p><a href="./">← Back to Homeward</a></p>
+      <p><a href="./">← Back to Native Place</a></p>
       <h1>How this was made</h1>
       <p class="lede">
         Every number in an answer, on the map and on the cards comes from a public source, and each
@@ -89,7 +89,7 @@
 
       <h2>Reading the official timetable</h2>
       <p>Trains at a Glance is published as 97 PDF tables. A program reads every table and checks every train; the full counts are in
-        <a href="https://github.com/Aftabbs/homeward/blob/main/pipeline/report.json">report.json</a>.</p>
+        <a href="https://github.com/Aftabbs/native-place/blob/main/pipeline/report.json">report.json</a>.</p>
       <ul>
         <li><strong>2,626 of 3,576 trains</strong> are read and pass every check. The rest are left out rather than shown wrongly.</li>
         <li>A train is left out if its times run backwards, if its parts in different tables do not join up, if fewer than two of its stations can be identified, or if it would need to travel faster than 160 km/h or take more than 90 hours.</li>
@@ -127,7 +127,7 @@
         <a href="https://www.goatcounter.com/">GoatCounter</a>, which uses no cookies. Your search and your card are worked out in your browser and are not uploaded anywhere. Visit counts record only the two states of a search, never the places.</p>
 
       <h2>Found a mistake?</h2>
-      <p><a href="https://github.com/Aftabbs/homeward/issues">Open an issue on GitHub</a> with the train number or district and the source that shows the right value. Always confirm a journey on NTES or IRCTC before you travel.</p>
+      <p><a href="https://github.com/Aftabbs/native-place/issues">Open an issue on GitHub</a> with the train number or district and the source that shows the right value. Always confirm a journey on NTES or IRCTC before you travel.</p>
     </main>
   </body>
 </html>

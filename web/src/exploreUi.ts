@@ -34,33 +34,38 @@ interface Loaded {
   trainsByNumber: Map<string, ExploreData['trains'][number]>;
 }
 
-let loaded: Loaded | null = null;
+export type SearchData = Omit<Loaded, 'districts'>;
 
+let loaded: Loaded | null = null;
+let searchData: Promise<SearchData> | null = null;
+let districtShapes: Promise<Loaded['districts']> | null = null;
+
+const getJson = (url: string) => fetch(url).then((r) => r.json());
+
+/** What a search needs, fetched once however many callers ask at the same time. */
+export function loadSearch(dataUrl: string): Promise<SearchData> {
+  searchData ??= Promise.all(
+    ['explore.json', 'fares.json', 'places.json', 'migration-2011.json', 'rail-travel-2023.json'].map((f) =>
+      getJson(`${dataUrl}${f}`),
+    ),
+  ).then(([explore, fares, places, migration, travel]) => {
+    const stationTrains = new Map<string, number>();
+    for (const t of (explore as ExploreData).trains) {
+      for (const [code] of t.stops) stationTrains.set(code, (stationTrains.get(code) ?? 0) + 1);
+    }
+    const trainsByNumber = new Map((explore as ExploreData).trains.map((t) => [t.n, t]));
+    return { explore, fares, places, migration, travel, stationTrains, trainsByNumber };
+  });
+  searchData.catch(() => (searchData = null)); // let a later call retry after a network error
+  return searchData;
+}
+
+/** Search data plus district outlines, which only explore mode draws. */
 export async function loadExplore(dataUrl: string): Promise<Loaded> {
   if (loaded) return loaded;
-  const get = (name: string) => fetch(`${dataUrl}${name}`).then((r) => r.json());
-  const [explore, fares, districts, places, migration, travel] = await Promise.all([
-    get('explore.json'),
-    get('fares.json'),
-    get('india-districts.json'),
-    get('places.json'),
-    get('migration-2011.json'),
-    get('rail-travel-2023.json'),
-  ]);
-  const stationTrains = new Map<string, number>();
-  for (const t of (explore as ExploreData).trains) {
-    for (const [code] of t.stops) stationTrains.set(code, (stationTrains.get(code) ?? 0) + 1);
-  }
-  loaded = {
-    explore,
-    fares,
-    districts,
-    places,
-    migration,
-    travel,
-    stationTrains,
-    trainsByNumber: new Map((explore as ExploreData).trains.map((t) => [t.n, t])),
-  };
+  districtShapes ??= getJson(`${dataUrl}india-districts.json`);
+  const [search, districts] = await Promise.all([loadSearch(dataUrl), districtShapes]);
+  loaded = { ...search, districts };
   return loaded;
 }
 

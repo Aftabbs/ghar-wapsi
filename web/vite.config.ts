@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
 // GitHub Pages serves a project site under its repository name: /<repo>/.
-const repo = process.env.GITHUB_REPOSITORY?.split('/')[1] ?? 'homeward';
+const repo = process.env.GITHUB_REPOSITORY?.split('/')[1] ?? 'native-place';
 
 export default defineConfig({
   base: process.env.GITHUB_PAGES ? `/${repo}/` : '/',

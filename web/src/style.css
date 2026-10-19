@@ -65,16 +65,128 @@ main {
   }
 }
 
+/* Before an answer the sheet is taller, so the promise, search and examples fit. */
+body:not(.answered) .panel {
+  max-height: 70dvh;
+}
+
+@media (min-width: 760px) {
+  body:not(.answered) .panel {
+    max-height: none;
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.brand .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+
 h1 {
   margin: 0;
-  font-size: clamp(1.5rem, 5vw, 2.2rem);
-  letter-spacing: 0.01em;
+  font-size: clamp(1.55rem, 6.4vw, 2.3rem);
+  line-height: 1.15;
+}
+
+h1 .accent {
+  color: var(--accent);
 }
 
 .tagline {
-  margin: 2px 0 12px;
+  margin: 6px 0 14px;
   color: var(--muted);
-  font-size: 1rem;
+  font-size: 0.98rem;
+  line-height: 1.4;
+}
+
+.answered .tagline {
+  display: none; /* the answer explains itself */
+}
+
+.examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.examples .small {
+  margin-right: 2px;
+}
+
+/* Phones: one row to swipe through, so the examples never push the search away. */
+@media (max-width: 759px) {
+  .examples {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 10px -16px 0;
+    padding: 0 16px 4px;
+    scrollbar-width: none;
+  }
+  .examples > * {
+    flex: none;
+  }
+}
+
+.chip {
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  background: #121b31;
+}
+
+.chip:hover {
+  border-color: var(--accent);
+}
+
+.answered .examples {
+  display: none;
+}
+
+/* A live count over the map: the first thing that says "trains". */
+.live {
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  right: 16px;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(7, 11, 22, 0.7);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.live:empty {
+  display: none;
+}
+
+@media (max-width: 759px) {
+  .live {
+    top: 34px;
+    left: 10px;
+    right: auto;
+    font-size: 0.8rem;
+  }
 }
 
 .answered .season {

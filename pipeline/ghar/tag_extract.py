@@ -21,7 +21,7 @@ FOLDER = ROOT / "data" / "raw" / "tag2026"
 BASE = "https://indianrailways.gov.in/railwayboard/uploads/directorate/coaching/TAG_2026/"
 TABLES = range(1, 98)
 EXTRA = ["Station_Code_Index.pdf", "Fares.pdf"]
-USER_AGENT = "homeward-pipeline/0.1 (+https://github.com/Aftabbs/homeward)"
+USER_AGENT = "native-place-pipeline/0.1 (+https://github.com/Aftabbs/native-place)"
 
 
 def download() -> list[Path]:

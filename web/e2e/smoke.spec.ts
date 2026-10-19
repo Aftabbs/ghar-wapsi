@@ -29,6 +29,15 @@ test('search finds a train home, highlights it, and makes a card', async ({ page
   expect(errors).toEqual([]);
 });
 
+test('the first screen says what the site does and an example answers in one tap', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.locator('h1')).toHaveText('Going to native? Find your train.');
+  await expect(page.locator('#live')).toContainText('trains on the move at', { timeout: 30_000 });
+  await page.getByRole('button', { name: 'Chennai → Madurai' }).click();
+  await expect(page.locator('#result-title')).toHaveText('Chennai → Madurai', { timeout: 30_000 });
+  await expect(page.locator('.examples')).toBeHidden();
+});
+
 test('a place with no railway gets the nearest station, not a blank', async ({ page }) => {
   await page.goto('./?from=Delhi&to=Leh');
   await expect(page.locator('#result-title')).toHaveText('Delhi → Leh', { timeout: 30_000 });
@@ -54,7 +63,7 @@ test('explore mode loads with the imagery credit and passes accessibility checks
   await expect(page.locator('#status')).toContainText('Tap a train', { timeout: 60_000 });
   await expect(page.locator('#satellite-credit')).toBeVisible();
   // Zoom in so stations, district outlines and labels are on screen for the scan.
-  await page.evaluate(() => (window as unknown as { homewardMap: { flyTo: (a: number, b: number, c: number) => void } }).homewardMap.flyTo(77.5696, 12.9782, 12));
+  await page.evaluate(() => (window as unknown as { nativePlaceMap: { flyTo: (a: number, b: number, c: number) => void } }).nativePlaceMap.flyTo(77.5696, 12.9782, 12));
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze();
   expect(results.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
   await page.click('#explore');

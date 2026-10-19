@@ -14,6 +14,7 @@ import {
   exploreBaseLayers,
   exploreTopLayers,
   loadExplore,
+  loadSearch,
   panelFor,
   renderPanel,
 } from './exploreUi';
@@ -55,12 +56,19 @@ const ui = {
   infoBody: document.querySelector<HTMLElement>('#info-body')!,
   infoClose: document.querySelector<HTMLButtonElement>('#info-close')!,
   credit: document.querySelector<HTMLElement>('#satellite-credit')!,
+  live: document.querySelector<HTMLElement>('#live')!,
 };
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/** Minutes past midnight in India (UTC+5:30), whatever the visitor's clock zone. */
+function indiaNow(): number {
+  const now = new Date();
+  return (now.getUTCHours() * 60 + now.getUTCMinutes() + 330) % DAY;
+}
+
 const state = {
-  minute: WINDOW[0] + 20 * 60, // open at 20:00, when the night trains are leaving
+  minute: WINDOW[0] + indiaNow(), // open at the time it is in India, so the map is live
   playing: !reducedMotion,
   light: false,
   long: null as TripBuffers | null,
@@ -88,10 +96,10 @@ function mapPadding() {
   const panel = document.querySelector('.panel')!.getBoundingClientRect();
   const stacked = width < 760; // panel sits under the map rather than beside it
   return {
-    top: stacked ? 64 : 32, // room for the end labels; on phones the credits line sits along the top
+    top: stacked ? 52 : 32, // room for the end labels; on phones the credits and live count sit along the top
     bottom: Math.round(stacked ? Math.max(height - panel.top, 0) + 12 : 40),
-    left: Math.round(stacked ? 12 : panel.right + 24),
-    right: 12,
+    left: Math.round(stacked ? 44 : panel.right + 24), // room for the end labels
+    right: stacked ? 44 : 24,
   };
 }
 
@@ -101,7 +109,7 @@ function fitView(bounds: [[number, number], [number, number]], maxZoom = 12): Ma
     padding: mapPadding(),
     maxZoom,
   });
-  return { longitude, latitude, zoom, minZoom: 3, maxZoom: 12 };
+  return { longitude, latitude, zoom, minZoom: Math.min(zoom, 3), maxZoom: 12 };
 }
 
 /** Fit India into the space the panel leaves. */
@@ -271,7 +279,7 @@ function showRoute(route: Route | null) {
       : 'Your train in gold. Every other train is dimmed.';
   } else {
     deck.setProps({ initialViewState: initialView() });
-    ui.legend.textContent = 'Every light is a train in the 2026 timetable. A day passes in 60 seconds.';
+    ui.legend.textContent = 'Every light is a train in the 2026 timetable, starting at the time in India now. A day passes in 60 seconds.';
   }
   render();
 }
@@ -311,7 +319,7 @@ const deck = new Deck({
 });
 
 // A small hook for scripted views (tests and the launch video).
-(window as unknown as { homewardMap: object }).homewardMap = {
+(window as unknown as { nativePlaceMap: object }).nativePlaceMap = {
   flyTo: (longitude: number, latitude: number, zoom: number) => {
     deck.setProps({ initialViewState: { ...initialView(), longitude, latitude, zoom } });
     // Setting the view directly does not raise onViewStateChange, so record the zoom here.
@@ -342,8 +350,19 @@ async function setExplore(on: boolean) {
   render();
 }
 
+let liveShown = -1;
+/** "1,507 trains on the move at 20:08", refreshed once per map minute. */
+function updateLive() {
+  const minute = Math.floor(state.minute);
+  if (minute === liveShown || !state.long) return;
+  liveShown = minute;
+  const moving = activeTrips(state.long, state.minute) + (state.rest ? activeTrips(state.rest, state.minute) : 0);
+  ui.live.textContent = `${moving.toLocaleString('en-IN')} trains on the move at ${clockLabel(state.minute)}`;
+}
+
 function render() {
   deck.setProps({ layers: layers() });
+  updateLive();
   ui.clock.textContent = clockLabel(state.minute);
   ui.time.value = String(Math.floor(state.minute - WINDOW[0]));
 }
@@ -446,11 +465,14 @@ async function start() {
     ui.status.textContent = reducedMotion ? 'Animation paused because reduced motion is on. Press Play to start.' : '';
     ui.summary.textContent =
       `The map animates ${long.length.toLocaleString('en-IN')} long-distance train runs from Trains at a ` +
-      `Glance 2026, the official Indian Railways timetable, across one day compressed into 60 seconds. At 8 pm about ` +
-      `${moving.toLocaleString('en-IN')} long-distance trains are on the move.`;
+      `Glance 2026, the official Indian Railways timetable, across one day compressed into 60 seconds. At ` +
+      `${clockLabel(state.minute)}, about ${moving.toLocaleString('en-IN')} long-distance trains are on the move.`;
     state.rest = await loadTrips(`${DATA}trains-rest.bin`);
     render();
     document.body.dataset.ready = 'true'; // for scripted checks
+    // Fetch the timetable for search while the visitor reads, so the first answer is instant.
+    const idle = window.requestIdleCallback ?? ((fn: () => void) => setTimeout(fn, 1500));
+    idle(() => void loadSearch(DATA).catch(() => undefined));
   } catch (error) {
     ui.status.textContent = 'The train data could not be loaded. Please refresh the page.';
     console.error(error);
