@@ -12,3 +12,4 @@ web/playwright-report/
 .env
 .env.*
 data/narrations/*.draft.json
+.claude/

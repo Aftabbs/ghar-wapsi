@@ -1,6 +1,6 @@
 from collections import Counter
 
-from ghar.tag import Gazetteer, _absolute, _split_block, _union, normalise, read_table
+from ghar.tag import Gazetteer, _absolute, _days, _split_block, _union, normalise, read_table
 
 
 def test_normalise_lines_up_spellings():
@@ -76,3 +76,11 @@ def test_gazetteer_matches_renamed_and_clipped_names():
     assert gazetteer.exact("KSR Bengaluru") == ["SBC"]  # renamed station
     assert gazetteer.candidates("urat") == ["ST"]  # first letter clipped by the PDF
     assert gazetteer.candidates("Bolpur") == ["BHP"]  # shorter official name
+
+
+def test_days_of_running():
+    assert _days("Daily") == ["Daily"]
+    assert _days("Tu, F,Su") == ["Tue", "Fri", "Sun"]
+    assert _days("W,Th,\nSu") == ["Wed", "Thu", "Sun"]
+    assert _days("Except W") == ["Mon", "Tue", "Thu", "Fri", "Sat", "Sun"]
+    assert _days("") is None

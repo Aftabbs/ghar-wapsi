@@ -329,6 +329,7 @@ def _header_rows(rows: list[list], number_row: int, train_cols: set[int]) -> dic
     return found
 
 
+WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 DAY_CODES = {"M": "Mon", "TU": "Tue", "W": "Wed", "TH": "Thu", "F": "Fri", "SA": "Sat", "SU": "Sun"}
 DAY_TOKEN = re.compile(r"\b(Tu|Th|Sa|Su|M|W|F)\b")
 CLASS_TOKEN = re.compile(r"[0-9A-Z]{1,3}")
@@ -341,7 +342,10 @@ def _days(text: str) -> list[str] | None:
     if "daily" in text.lower():
         return ["Daily"]
     days = [DAY_CODES[t.upper()] for t in DAY_TOKEN.findall(text)]
-    return list(dict.fromkeys(days)) or None
+    if "except" in text.lower() and days:
+        # "Except W": every day but those listed.
+        return [d for d in WEEK if d not in days] or None
+    return sorted(set(days), key=WEEK.index) or None
 
 
 def _record_info(info: dict, number: str, col: int, header: dict) -> None:

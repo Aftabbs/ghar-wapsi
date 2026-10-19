@@ -4,7 +4,7 @@ from pathlib import Path
 from ghar.specials import build
 
 HEADER = (
-    "train_number,name,from_code,from_station,to_code,to_station,departure_time,arrival_time,"
+    "train_number,name,season,from_code,from_station,to_code,to_station,departure_time,arrival_time,"
     "arrival_day_offset,run_days,first_run,last_run,source_url,source_title,verified_on,notes"
 )
 STATIONS = {
@@ -26,6 +26,7 @@ def row(**overrides):
     base = {
         "train_number": "06559",
         "name": "SMVT-Rangapara",
+        "season": "Diwali and Chhath 2026",
         "from_code": "SMVB",
         "from_station": "SMVT",
         "to_code": "RPAN",

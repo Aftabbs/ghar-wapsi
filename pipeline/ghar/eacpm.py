@@ -60,7 +60,7 @@ STATES = {
 
 def fetch(target: Path) -> Path:
     if not target.exists():
-        request = urllib.request.Request(URL, headers={"User-Agent": "ghar-wapsi-pipeline/0.1"})
+        request = urllib.request.Request(URL, headers={"User-Agent": "homeward-pipeline/0.1"})
         with urllib.request.urlopen(request, timeout=120) as response:
             target.write_bytes(response.read())
     return target

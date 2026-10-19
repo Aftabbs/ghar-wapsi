@@ -1,4 +1,4 @@
-"""2026 festival specials from data/specials/specials-2026.csv.
+"""Seasonal special trains from data/specials/specials-2026.csv.
 
 Each row was transcribed from an official Indian Railways notice (source_url). Rows
 are validated here; anything that fails is reported, never silently fixed.
@@ -61,6 +61,7 @@ def build(csv_path: Path, stations: dict[str, dict]) -> tuple[list[dict], dict]:
             {
                 "n": number,
                 "name": row["name"].strip(),
+                "season": row["season"].strip(),
                 "o": row["from_code"].strip(),
                 "d": row["to_code"].strip(),
                 "oState": origin["state"],

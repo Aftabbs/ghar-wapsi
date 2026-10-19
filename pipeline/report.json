@@ -1,86 +1,7 @@
 {
-  "routes": {
-    "bengaluru": {
-      "direct": 167,
-      "nearest_served": 117
-    },
-    "delhi": {
-      "direct": 302,
-      "nearest_served": 131
-    },
-    "mumbai": {
-      "direct": 256,
-      "nearest_served": 117
-    },
-    "hyderabad": {
-      "direct": 111,
-      "nearest_served": 68
-    },
-    "chennai": {
-      "direct": 176,
-      "nearest_served": 141
-    },
-    "kolkata": {
-      "direct": 82,
-      "nearest_served": 80
-    },
-    "pune": {
-      "direct": 170,
-      "nearest_served": 103
-    },
-    "ahmedabad": {
-      "direct": 209,
-      "nearest_served": 119
-    },
-    "surat": {
-      "direct": 199,
-      "nearest_served": 113
-    },
-    "jaipur": {
-      "direct": 163,
-      "nearest_served": 117
-    },
-    "ludhiana": {
-      "direct": 176,
-      "nearest_served": 129
-    },
-    "chandigarh": {
-      "direct": 46,
-      "nearest_served": 83
-    },
-    "gurugram": {
-      "direct": 78,
-      "nearest_served": 80
-    },
-    "noida": {
-      "direct": 0,
-      "nearest_served": 0
-    },
-    "kochi": {
-      "direct": 127,
-      "nearest_served": 74
-    },
-    "coimbatore": {
-      "direct": 99,
-      "nearest_served": 54
-    },
-    "nagpur": {
-      "direct": 164,
-      "nearest_served": 116
-    },
-    "indore": {
-      "direct": 98,
-      "nearest_served": 99
-    },
-    "visakhapatnam": {
-      "direct": 137,
-      "nearest_served": 99
-    },
-    "guwahati": {
-      "direct": 132,
-      "nearest_served": 125
-    },
-    "districts": 641
+  "places": {
+    "districts": 640,
+    "renamed_or_aliased": 122
   },
   "stations": {
     "datameet_stations": 8697,
@@ -245,15 +166,15 @@
     {
       "file": "specials-2026.json",
       "specials": 113,
-      "bytes": 52035
+      "bytes": 55877
     },
     {
-      "file": "routes.json",
-      "bytes": 146566
+      "file": "places.json",
+      "bytes": 41624
     },
     {
       "file": "explore.json",
-      "bytes": 873600
+      "bytes": 879444
     }
   ]
 }

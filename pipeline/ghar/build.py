@@ -18,7 +18,7 @@ from . import (
     explore,
     fares,
     pack,
-    routes,
+    places,
     specials,
     stations,
     tag,
@@ -96,23 +96,8 @@ def main() -> int:
     files.append(specials.write(festival, OUT / "specials-2026.json"))
 
     districts = DistrictIndex(RAW / "districts-2011.geojson").districts
-    centroids = {d.census_code: d.centroid for d in districts}
-    route_data, route_report = routes.build(
-        trips, {s.code: s.district_code for s in gazetteer}, centroids
-    )
-    # name, Census 2011 state, lon, lat, state today (Telangana split from Andhra in 2014)
-    state_today = boundaries.current_state_locator(RAW)
-    route_data["districts"] = {
-        str(d.census_code): [
-            d.name,
-            d.state,
-            round(d.centroid[0], 3),
-            round(d.centroid[1], 3),
-            state_today(*d.centroid),
-        ]
-        for d in sorted(districts, key=lambda d: (d.state, d.name))
-    }
-    files.append(routes.write(route_data, OUT / "routes.json"))
+    place_data, place_report = places.build(districts, boundaries.current_state_locator(RAW))
+    files.append(places.write(place_data, OUT / "places.json"))
 
     distance = explore.calibrate_distance(trips, RAW / "trains.json")
     explore_data, explore_report = explore.build(
@@ -123,7 +108,7 @@ def main() -> int:
     train_report.update(explore_report)
 
     report = {
-        "routes": route_report,
+        "places": place_report,
         "stations": station_report,
         "trains": train_report,
         "specials": specials_report,
