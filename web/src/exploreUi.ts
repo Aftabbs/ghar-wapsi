@@ -4,7 +4,8 @@ import type { Layer, PickingInfo } from '@deck.gl/core';
 import { TileLayer } from '@deck.gl/geo-layers';
 import { BitmapLayer, GeoJsonLayer, ScatterplotLayer, TextLayer } from '@deck.gl/layers';
 
-import type { Migration, RailTravel, RouteData } from './card';
+import type { Migration, RailTravel } from './card';
+import type { Places } from './places';
 import {
   districtPanel,
   type ExploreData,
@@ -26,7 +27,7 @@ interface Loaded {
   districts: {
     features: { properties: { code: number; name: string }; geometry: { type: string; coordinates: unknown } }[];
   };
-  routes: RouteData;
+  places: Places;
   migration: Migration;
   travel: RailTravel;
   stationTrains: Map<string, number>;
@@ -38,11 +39,11 @@ let loaded: Loaded | null = null;
 export async function loadExplore(dataUrl: string): Promise<Loaded> {
   if (loaded) return loaded;
   const get = (name: string) => fetch(`${dataUrl}${name}`).then((r) => r.json());
-  const [explore, fares, districts, routes, migration, travel] = await Promise.all([
+  const [explore, fares, districts, places, migration, travel] = await Promise.all([
     get('explore.json'),
     get('fares.json'),
     get('india-districts.json'),
-    get('routes.json'),
+    get('places.json'),
     get('migration-2011.json'),
     get('rail-travel-2023.json'),
   ]);
@@ -54,7 +55,7 @@ export async function loadExplore(dataUrl: string): Promise<Loaded> {
     explore,
     fares,
     districts,
-    routes,
+    places,
     migration,
     travel,
     stationTrains,
@@ -217,8 +218,8 @@ export function panelFor(
   }
   if (id === 'explore-districts' && info.object) {
     const code = String((info.object as { properties: { code: number } }).properties.code);
-    return loaded.routes.districts[code]
-      ? districtPanel(code, loaded.routes, loaded.migration, loaded.explore)
+    return loaded.places.districts[code]
+      ? districtPanel(code, loaded.places, loaded.migration, loaded.explore)
       : null;
   }
   if (id === 'explore-states' && info.object) {

@@ -1,10 +1,11 @@
-// Festival specials: verified 2026 Diwali/Chhath trains drawn as arcs home.
+// Special trains for the season (now Diwali and Chhath 2026), drawn as arcs home.
 
 import { DAY, WINDOW } from './data';
 
 export interface Special {
   n: string;
   name: string;
+  season: string; // e.g. "Diwali and Chhath 2026"
   o: string;
   d: string;
   oState: string | null;
@@ -22,7 +23,7 @@ export interface Special {
   verified: string;
 }
 
-// States people mostly travel *from* at festival time; a special leaving one of
+// States people mostly travel *from* in a holiday rush; a special leaving one of
 // these for anywhere else is heading home. The reverse direction is the return trip.
 export const WORK_HUBS = new Set([
   'NCT of Delhi',

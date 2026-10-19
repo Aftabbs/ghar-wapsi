@@ -1,6 +1,6 @@
-import { Deck, type MapViewState, WebMercatorViewport } from '@deck.gl/core';
+import { Deck, FlyToInterpolator, type MapViewState, WebMercatorViewport } from '@deck.gl/core';
 import { TripsLayer } from '@deck.gl/geo-layers';
-import { GeoJsonLayer, PathLayer, ScatterplotLayer } from '@deck.gl/layers';
+import { GeoJsonLayer, PathLayer, ScatterplotLayer, TextLayer } from '@deck.gl/layers';
 
 import { activeTrips, clockLabel, DAY, loadTrips, type TripBuffers, WINDOW } from './data';
 import {
@@ -9,9 +9,7 @@ import {
   type Special,
   type SpecialTrip,
   specialTrips,
-  summary,
 } from './festival';
-import { setupCard } from './cardUi';
 import {
   exploreBaseLayers,
   exploreTopLayers,
@@ -19,10 +17,12 @@ import {
   panelFor,
   renderPanel,
 } from './exploreUi';
+import { type Route, setupSearch } from './search';
 import './style.css';
 
 const DATA = `${import.meta.env.BASE_URL}data/`;
-const SITE_URL = 'aftabbs.github.io/ghar-wapsi';
+// Wherever the site is served from, without the protocol: printed on every card.
+const SITE_URL = `${location.host}${import.meta.env.BASE_URL}`.replace(/\/$/, '');
 const LOOP_SECONDS = 60; // one clock day per minute of real time
 const MINUTES_PER_MS = DAY / (LOOP_SECONDS * 1000);
 const TRAIL_MIN = { full: 40, light: 25 }; // short trails read as moving trains, long ones as track
@@ -47,7 +47,8 @@ const ui = {
   status: document.querySelector<HTMLParagraphElement>('#status')!,
   summary: document.querySelector<HTMLParagraphElement>('#summary-text')!,
   festival: document.querySelector<HTMLButtonElement>('#festival')!,
-  bengaluru: document.querySelector<HTMLButtonElement>('#bengaluru')!,
+  season: document.querySelector<HTMLElement>('#season')!,
+  seasonText: document.querySelector<HTMLElement>('#season-text')!,
   legend: document.querySelector<HTMLParagraphElement>('#legend')!,
   explore: document.querySelector<HTMLButtonElement>('#explore')!,
   info: document.querySelector<HTMLElement>('#info')!,
@@ -66,7 +67,7 @@ const state = {
   rest: null as TripBuffers | null,
   states: null as unknown,
   festival: false,
-  bengaluru: false,
+  route: null as Route | null,
   specials: [] as Special[],
   specialTrips: [] as SpecialTrip[],
   explore: false,
@@ -80,24 +81,32 @@ const INDIA_BOUNDS: [[number, number], [number, number]] = [
   [97.4, 35.7],
 ];
 
-/** Fit India into the space between the title and the control panel. */
-function initialView(): MapViewState {
+/** Space the panel leaves for the map: beside it on wide screens, above it on phones. */
+function mapPadding() {
   const width = window.innerWidth;
   const height = window.innerHeight;
-  const title = document.querySelector('.title')!.getBoundingClientRect();
-  const hud = document.querySelector('.hud')!.getBoundingClientRect();
+  const panel = document.querySelector('.panel')!.getBoundingClientRect();
   const stacked = width < 760; // panel sits under the map rather than beside it
-  const padding = {
-    top: Math.round(title.bottom + 8),
-    bottom: Math.round(stacked ? height - hud.top + 8 : 40),
-    left: Math.round(stacked ? 8 : hud.right + 16),
-    right: 8,
+  return {
+    top: stacked ? 64 : 32, // room for the end labels; on phones the credits line sits along the top
+    bottom: Math.round(stacked ? Math.max(height - panel.top, 0) + 12 : 40),
+    left: Math.round(stacked ? 12 : panel.right + 24),
+    right: 12,
   };
-  const { longitude, latitude, zoom } = new WebMercatorViewport({ width, height }).fitBounds(
-    INDIA_BOUNDS,
-    { padding },
-  );
-  return { longitude, latitude, zoom, minZoom: Math.min(zoom, 3), maxZoom: 12 };
+}
+
+function fitView(bounds: [[number, number], [number, number]], maxZoom = 12): MapViewState {
+  const { width, height } = { width: window.innerWidth, height: window.innerHeight };
+  const { longitude, latitude, zoom } = new WebMercatorViewport({ width, height }).fitBounds(bounds, {
+    padding: mapPadding(),
+    maxZoom,
+  });
+  return { longitude, latitude, zoom, minZoom: 3, maxZoom: 12 };
+}
+
+/** Fit India into the space the panel leaves. */
+function initialView(): MapViewState {
+  return fitView(INDIA_BOUNDS);
 }
 
 function tripsLayer(id: string, trips: TripBuffers, color: [number, number, number], width: number) {
@@ -124,7 +133,8 @@ function tripsLayer(id: string, trips: TripBuffers, color: [number, number, numb
     capRounded: true,
     jointRounded: true,
     fadeTrail: true,
-    opacity: state.festival ? 0.22 : 0.9,
+    // A searched route stands out by dimming every other train.
+    opacity: state.route ? 0.12 : state.festival ? 0.22 : 0.9,
     parameters: GLOW,
   });
 }
@@ -149,17 +159,13 @@ function layers() {
   if (state.rest && !state.light) out.push(tripsLayer('rest', state.rest, [255, 140, 70], 1));
   if (state.long) out.push(tripsLayer('long', state.long, [255, 196, 110], 2));
   if (state.festival) out.push(...festivalLayers());
+  if (state.route) out.push(...routeLayers(state.route));
   if (state.explore && state.states) out.push(...exploreTopLayers(state.states as never, state.zoom));
   return out;
 }
 
-function inFocus(special: Special): boolean {
-  return !state.bengaluru || special.oState === 'Karnataka';
-}
-
 function festivalLayers() {
   const homeward = state.specials.filter(isHomeward);
-  const focused = homeward.filter(inFocus);
   return [
     // Every verified homeward special as a faint route, including those whose notice
     // gives no timings (they are drawn but never animated).
@@ -167,13 +173,12 @@ function festivalLayers() {
       id: 'special-routes',
       data: homeward,
       getPath: (s) => arcPath(s.from, s.to),
-      getColor: (s) => [...GOLD, inFocus(s) ? 70 : 18],
+      getColor: [...GOLD, 70],
       widthMinPixels: 1,
-      updateTriggers: { getColor: state.bengaluru },
     }),
     new TripsLayer<SpecialTrip>({
       id: 'special-trips',
-      data: state.specialTrips.filter((t) => isHomeward(t.special) && inFocus(t.special)),
+      data: state.specialTrips.filter((t) => isHomeward(t.special)),
       getPath: (t) => t.path,
       getTimestamps: (t) => t.timestamps,
       getColor: GOLD,
@@ -187,13 +192,88 @@ function festivalLayers() {
     }),
     new ScatterplotLayer<Special>({
       id: 'special-ends',
-      data: focused,
+      data: homeward,
       getPosition: (s) => s.to,
       getRadius: 3,
       radiusUnits: 'pixels',
       getFillColor: [...GOLD, 200],
     }),
   ];
+}
+
+function routeLayers(route: Route) {
+  const ends = [
+    { at: route.from, label: route.labels[0] },
+    { at: route.to, label: route.labels[1] },
+  ];
+  return [
+    new PathLayer<[number, number][]>({
+      id: 'route-road',
+      data: route.roads,
+      getPath: (p) => p,
+      getColor: [255, 227, 163, 150],
+      widthMinPixels: 2,
+    }),
+    new PathLayer<[number, number][]>({
+      id: 'route',
+      data: route.paths,
+      getPath: (p) => p,
+      getColor: [...GOLD, 255],
+      widthMinPixels: 4,
+      capRounded: true,
+      jointRounded: true,
+      parameters: GLOW,
+    }),
+    new ScatterplotLayer<(typeof ends)[number]>({
+      id: 'route-ends',
+      data: ends,
+      getPosition: (e) => e.at,
+      getRadius: 7,
+      radiusUnits: 'pixels',
+      getFillColor: [255, 227, 163, 255],
+      stroked: true,
+      getLineColor: [7, 11, 22, 255],
+      lineWidthMinPixels: 2,
+    }),
+    new TextLayer<(typeof ends)[number]>({
+      id: 'route-labels',
+      data: ends,
+      getPosition: (e) => e.at,
+      getText: (e) => e.label,
+      getSize: 15,
+      getColor: [255, 255, 255, 255],
+      getPixelOffset: [0, -18],
+      fontFamily: 'Noto Sans, system-ui, sans-serif',
+      fontWeight: 600,
+      outlineWidth: 3,
+      outlineColor: [7, 11, 22, 255],
+      fontSettings: { sdf: true },
+    }),
+  ];
+}
+
+function showRoute(route: Route | null) {
+  state.route = route;
+  if (route) {
+    const points = [route.from, route.to, ...route.paths.flat(), ...route.roads.flat()];
+    const lons = points.map((p) => p[0]);
+    const lats = points.map((p) => p[1]);
+    const view = fitView(
+      [
+        [Math.min(...lons) - 0.3, Math.min(...lats) - 0.3],
+        [Math.max(...lons) + 0.3, Math.max(...lats) + 0.3],
+      ],
+      8,
+    );
+    deck.setProps({ initialViewState: { ...view, transitionDuration: reducedMotion ? 0 : 900, transitionInterpolator: new FlyToInterpolator() } });
+    ui.legend.textContent = route.roads.length
+      ? 'Your train in gold, the road part in pale gold. Every other train is dimmed.'
+      : 'Your train in gold. Every other train is dimmed.';
+  } else {
+    deck.setProps({ initialViewState: initialView() });
+    ui.legend.textContent = 'Every light is a train in the 2026 timetable. A day passes in 60 seconds.';
+  }
+  render();
 }
 
 const deck = new Deck({
@@ -231,7 +311,7 @@ const deck = new Deck({
 });
 
 // A small hook for scripted views (tests and the launch video).
-(window as unknown as { gharMap: object }).gharMap = {
+(window as unknown as { homewardMap: object }).homewardMap = {
   flyTo: (longitude: number, latitude: number, zoom: number) => {
     deck.setProps({ initialViewState: { ...initialView(), longitude, latitude, zoom } });
     // Setting the view directly does not raise onViewStateChange, so record the zoom here.
@@ -289,29 +369,20 @@ function frame(now: number) {
   requestAnimationFrame(frame);
 }
 
-function festivalLegend(): string {
-  const s = summary(state.specials);
-  const focus = state.specials.filter((x) => isHomeward(x) && x.oState === 'Karnataka');
-  if (state.bengaluru) {
-    return `Gold: ${focus.length} verified festival specials leaving Bengaluru for home`;
-  }
-  return `Gold: ${s.homeward} verified Diwali–Chhath specials heading home`;
-}
-
 function setFestival(on: boolean) {
   state.festival = on;
   ui.festival.setAttribute('aria-pressed', String(on));
-  ui.legend.textContent = on ? festivalLegend() : 'Each light is a train · 24 hours in 60 seconds';
+  ui.festival.textContent = on ? 'Hide them' : 'Show them on the map';
   render();
 }
 
-function setBengaluru(on: boolean) {
-  state.bengaluru = on;
-  ui.bengaluru.setAttribute('aria-pressed', String(on));
-  if (on && !state.festival) setFestival(true);
-  // No camera move: Bengaluru's specials reach as far as Assam, so all of India stays in view.
-  ui.legend.textContent = state.festival ? festivalLegend() : ui.legend.textContent;
-  render();
+/** The strip about special trains appears only while a season's specials are running. */
+function showSeason(specials: Special[]) {
+  const running = specials.filter((s) => !s.last || s.last >= new Date().toISOString().slice(0, 10));
+  if (!running.length) return;
+  const homeward = running.filter(isHomeward).length;
+  ui.seasonText.textContent = `${running[0].season}: ${homeward} verified special trains are running from the big cities.`;
+  ui.season.hidden = false;
 }
 
 function setPlaying(playing: boolean) {
@@ -333,7 +404,6 @@ document.addEventListener('keydown', (event) => {
     ui.explore.focus();
   }
 });
-ui.bengaluru.addEventListener('click', () => setBengaluru(!state.bengaluru));
 ui.time.addEventListener('input', () => {
   setPlaying(false);
   state.minute = WINDOW[0] + Number(ui.time.value);
@@ -349,12 +419,28 @@ document.addEventListener('keydown', (event) => {
 async function start() {
   setPlaying(state.playing);
   try {
-    const [states, long] = await Promise.all([
+    const [states, long, specials] = await Promise.all([
       fetch(`${DATA}india-states.json`).then((r) => r.json()),
       loadTrips(`${DATA}trains-long.bin`),
+      fetch(`${DATA}specials-2026.json`).then((r) => r.json() as Promise<Special[]>),
     ]);
     state.states = states;
     state.long = long;
+    state.specials = specials;
+    state.specialTrips = specialTrips(specials);
+    showSeason(specials);
+    setupSearch({
+      dataUrl: DATA,
+      siteUrl: SITE_URL,
+      specials: () => state.specials,
+      states: () => state.states,
+      onRoute: showRoute,
+      // Counted in GoatCounter (no cookies), by state only.
+      onSearch: (fromState, toState) => {
+        const counter = (window as { goatcounter?: { count: (v: object) => void } }).goatcounter;
+        counter?.count({ path: `search/${fromState}/${toState}`, title: 'Search', event: true });
+      },
+    });
     render();
     const moving = activeTrips(long, state.minute);
     ui.status.textContent = reducedMotion ? 'Animation paused because reduced motion is on. Press Play to start.' : '';
@@ -362,33 +448,14 @@ async function start() {
       `The map animates ${long.length.toLocaleString('en-IN')} long-distance train runs from Trains at a ` +
       `Glance 2026, the official Indian Railways timetable, across one day compressed into 60 seconds. At 8 pm about ` +
       `${moving.toLocaleString('en-IN')} long-distance trains are on the move.`;
-    const [rest, specials] = await Promise.all([
-      loadTrips(`${DATA}trains-rest.bin`),
-      fetch(`${DATA}specials-2026.json`).then((r) => r.json() as Promise<Special[]>),
-    ]);
-    state.rest = rest;
-    state.specials = specials;
-    state.specialTrips = specialTrips(specials);
-    ui.festival.disabled = false;
-    ui.bengaluru.disabled = false;
+    state.rest = await loadTrips(`${DATA}trains-rest.bin`);
     render();
+    document.body.dataset.ready = 'true'; // for scripted checks
   } catch (error) {
     ui.status.textContent = 'The train data could not be loaded. Please refresh the page.';
     console.error(error);
   }
   requestAnimationFrame(frame);
 }
-
-setupCard({
-  dataUrl: DATA,
-  specials: () => state.specials,
-  states: () => state.states,
-  siteUrl: SITE_URL,
-  // Counted as an event in GoatCounter (no cookies); measures the cards target.
-  onCardMade: (cityId, homeState) => {
-    const counter = (window as { goatcounter?: { count: (v: object) => void } }).goatcounter;
-    counter?.count({ path: `card/${cityId}/${homeState}`, title: 'Card made', event: true });
-  },
-});
 
 start();

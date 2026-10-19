@@ -23,7 +23,7 @@ for (const d of devices) {
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   await page.goto(base);
-  await page.waitForFunction(() => document.querySelector('#status')?.textContent === '', null, { timeout: 30000 });
+  await page.waitForFunction(() => document.body.dataset.ready === 'true', null, { timeout: 30000 });
   await page.click('#play'); // pause: software GL cannot screenshot a live animation
   await page.waitForTimeout(500);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);

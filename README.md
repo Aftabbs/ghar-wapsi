@@ -1,36 +1,43 @@
-# Ghar Wapsi
+# Homeward
 
-**India's festival homecoming, animated.** Every long-distance train on one night, the 2026
-Diwali and Chhath specials heading home, and a card that shows your own journey.
+**Find your train home, from anywhere in India.** Type where you live and where home is.
+Homeward gives the fastest train in the official 2026 timetable, an estimated fare range,
+any special trains running this season, and how many people make the same move, with a
+source next to every figure.
 
-**Live:** [aftabbs.github.io/ghar-wapsi](https://aftabbs.github.io/ghar-wapsi/)
+**Live:** [aftabbs.github.io/homeward](https://aftabbs.github.io/homeward/)
 
 <p>
-  <img src="docs/screenshot-laptop.png" alt="Dark map of India with thousands of glowing trains and gold arcs from Bengaluru to the east and north-east" width="68%">
-  <img src="docs/card-example.png" alt="A shareable card: Delhi to Darbhanga, the fastest direct train, verified festival specials and migration figures" width="28%">
+  <img src="docs/screenshot-laptop.png" alt="The search panel showing Bengaluru to Patna: the fastest direct train, fares and special trains, with the route lit in gold on a dark map of India" width="68%">
+  <img src="docs/card-example.png" alt="A shareable card for Bengaluru to Patna with the train, fare range, special trains and Census figures, each with its source" width="28%">
 </p>
 
-## What it shows
+## What it does
 
-- **The night map.** 2,626 trains from the official 2026 timetable, crossing
-  India over one day compressed into 60 seconds.
-- **Festival mode.** 113 Diwali and Chhath special trains, each taken from an official railway
-  notice and linked to it. The ones heading home glow gold.
-- **From Bengaluru.** The specials leaving India's largest southern work hub for Bihar,
-  Bengal, Jharkhand and Assam.
-- **Explore.** Switch to satellite imagery with state, district and station names, then tap
-  a train for its timings, stops, days, classes and an estimated fare range, or tap a
-  station, district or state for its trains, specials and where people travel.
-- **My journey home.** Pick your city and home district to get a phone-sized card: a short
-  story line in English and Hindi, then the fastest direct train, the specials on your route,
-  where people from your state travel, and how many live in your city.
+- **Any place to any place.** Search any of India's 640 districts under the names people
+  use today (Gurugram, Prayagraj, Leh in Ladakh) or any of 867 timetable stations. Old names
+  such as Bangalore, Gurgaon or Calcutta work too.
+- **The train.** The fastest direct train, its times, days and journey length. With no direct
+  train, the quickest trip with one change (in the same station or across town). Where a place
+  has no station in the timetable, the nearest useful one and how far away it is; Ladakh,
+  Lakshadweep and the Andaman Islands are named as having no railway yet.
+- **The fare.** A range per class, estimated from the official fare tables for the part of the
+  trip you ride.
+- **Special trains this season.** Shown only while they run, each linked to its official notice.
+  Now: Diwali and Chhath 2026. Each holiday rush adds its own.
+- **You are not alone.** The share of long-distance train trips between the two states (2023)
+  and how many people from home live where you do (Census 2011).
+- **A card to share** with every line sourced, and a link that opens the same answer.
+- **The map.** Every train in the timetable moving across one day in 60 seconds; your route
+  lights up and the rest dims. Explore mode adds satellite imagery and tap-for-details panels
+  for trains, stations, districts and states.
 
 ## Data
 
 | What | Source | Date |
 |---|---|---|
 | Train timings | [Trains at a Glance](https://indianrailways.gov.in/railwayboard/view_section.jsp?lang=0&id=0,1,304,366,537,3143), Ministry of Railways (Railway Board) | Effective 1 Jan 2026 |
-| Festival specials | Zonal railway press releases on `*.indianrailways.gov.in` | Checked 17 Oct 2026 |
+| Special trains (Diwali and Chhath 2026) | Zonal railway press releases on `*.indianrailways.gov.in` | Checked 17 Oct 2026 |
 | Rail travel between states | [EAC-PM, *400 Million Dreams*](https://eacpm.gov.in/wp-content/uploads/2024/12/FINAL-Internal-Migration-Project.docx-Publication-Version.pdf), Table 7 | 2023 |
 | People living in another state | Census of India, Table D-02 | 2011, the latest count |
 | Fares (estimates) | Trains at a Glance 2026 fare tables + Commercial Circular 24/2025 | w.e.f. 1 Jul 2025, revised 26 Dec 2025 |
@@ -38,8 +45,8 @@ Diwali and Chhath specials heading home, and a card that shows your own journey.
 | Station locations | [DataMeet](https://github.com/datameet/railways) + [OpenStreetMap](https://www.openstreetmap.org/copyright) | OSM Oct 2026 |
 | Boundaries | Survey of India outline via [DataMeet maps](https://github.com/datameet/maps) | — |
 
-Census 2027 migration tables are not yet published; the card shows the 2011 count with its
-date beside the 2023 rail-travel figure. The [methods page](https://aftabbs.github.io/ghar-wapsi/methods.html)
+Census 2027 migration tables are not yet published; the answer shows the 2011 count with its
+date beside the 2023 rail-travel figure. The [methods page](https://aftabbs.github.io/homeward/methods.html)
 explains every check and limit.
 
 ### How the timetable is checked
@@ -62,8 +69,6 @@ cd pipeline
 python -m ghar.fetch          # DataMeet, OpenStreetMap, Census 2011 tables
 python -m ghar.tag_extract    # Trains at a Glance 2026 PDFs -> table cells (about 6 minutes)
 python -m ghar.build          # writes web/public/data and pipeline/report.json
-python -m ghar.narrate        # optional: story lines via Groq (GROQ_API_KEY in .env)
-python -m ghar.narrate --from-cache   # rebuild story lines from data/narrations, no key
 ```
 
 ```bash
@@ -82,25 +87,26 @@ The built data is committed, so the web app runs without the pipeline.
 | `pipeline/ghar/tag_extract.py` | Downloads Trains at a Glance 2026 and extracts every table |
 | `pipeline/ghar/tag.py` | Reads train columns, joins tables, matches stations, validates |
 | `pipeline/ghar/stations.py` | Merges DataMeet and OpenStreetMap stations, assigns districts |
-| `pipeline/ghar/specials.py` | Validates the hand-transcribed festival specials |
+| `pipeline/ghar/specials.py` | Validates the hand-transcribed special trains |
 | `pipeline/ghar/census.py`, `eacpm.py` | Census 2011 D-02 and EAC-PM 2023 tables |
-| `pipeline/ghar/routes.py` | Fastest direct train from 20 cities to every district |
+| `pipeline/ghar/places.py` | Districts under today's names and states, with old names as aliases |
 | `pipeline/ghar/pack.py` | Packs trips into a compact binary for the browser |
-| `data/specials/` | The festival specials, one official source link per train |
-| `web/` | The map (deck.gl), the card and the methods page |
+| `data/specials/` | Special trains by season, one official source link per train |
+| `web/src/journey.ts`, `answer.ts` | Finding the train (direct, one change, nearest station) and the answer |
+| `web/` | The map (deck.gl), search, card and methods page |
 | `tests/`, `web/src/*.test.ts`, `web/e2e/` | Pipeline, unit, browser and accessibility tests |
 
 ## Tests
 
 ```bash
 python -m pytest                      # pipeline (real-data tests run when data/raw exists)
-cd web && npx vitest run              # card, festival and decoder logic
+cd web && npx vitest run              # search, journeys, fares and decoder logic
 cd web && npm run build && npx playwright test   # browser flow and WCAG 2.2 AA checks
 ```
 
 ## Found a mistake?
 
-[Open an issue](https://github.com/Aftabbs/ghar-wapsi/issues) with the train number or district
+[Open an issue](https://github.com/Aftabbs/homeward/issues) with the train number or district
 and the source that shows the right value. Always confirm a journey on NTES or IRCTC before you
 travel.
 

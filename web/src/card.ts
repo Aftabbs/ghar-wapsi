@@ -1,13 +1,4 @@
-// "My journey home" card: facts from sourced data only, drawn on a 1080x1920 canvas.
-
-import { isHomeward, type Special } from './festival';
-
-export interface RouteData {
-  cities: Record<string, { name: string; districts: number[] }>;
-  routes: Record<string, Record<string, [number, string] | [number, string, number]>>;
-  // name, Census 2011 state, lon, lat, state today (Telangana became a state in 2014)
-  districts: Record<string, [string, string, number, number, string]>;
-}
+// The share card: facts from sourced data only, drawn on a 1080x1920 canvas.
 
 export interface Migration {
   districts: Record<string, { name: string; state: string; from: Record<string, number> }>;
@@ -19,134 +10,11 @@ export interface RailTravel {
   shares: Record<string, Record<string, number>>; // origin state -> destination state -> %
 }
 
-export interface TrainMeta {
-  n: string;
-  name: string;
-}
-
-export interface Narration {
-  en: string;
-  hi: string;
-}
-
-export interface Narrations {
-  model: string;
-  cards: Record<string, Narration>; // "cityId|home state"
-}
-
 export interface CardFacts {
   title: string;
   from: [number, number];
   to: [number, number];
-  // AI-written summary of the lines below; null if none passed the checks.
-  narration: Narration | null;
   lines: { text: string; source: string }[];
-}
-
-const SPECIALS_AS_OF = '17 Oct 2026';
-const TIMETABLE = 'Trains at a Glance 2026';
-
-/** The name people use: official data says "NCT of Delhi". */
-function spoken(state: string): string {
-  return state === 'NCT of Delhi' ? 'Delhi' : state;
-}
-
-export function formatIndian(n: number): string {
-  return Math.round(n).toLocaleString('en-IN');
-}
-
-function haversineKm([lon1, lat1]: [number, number], [lon2, lat2]: [number, number]): number {
-  const r = (d: number) => (d * Math.PI) / 180;
-  const a =
-    Math.sin(r(lat2 - lat1) / 2) ** 2 +
-    Math.cos(r(lat1)) * Math.cos(r(lat2)) * Math.sin(r(lon2 - lon1) / 2) ** 2;
-  return 2 * 6371 * Math.asin(Math.sqrt(a));
-}
-
-export function cardFacts(
-  cityId: string,
-  homeDistrict: string,
-  data: {
-    routes: RouteData;
-    migration: Migration;
-    travel: RailTravel;
-    specials: Special[];
-    trains: Map<string, string>;
-    narrations?: Narrations;
-  },
-): CardFacts {
-  const city = data.routes.cities[cityId];
-  const [homeName, homeState2011, homeLon, homeLat, homeState] = data.routes.districts[homeDistrict];
-  const [, cityState2011, cityLon, cityLat, cityState] = data.routes.districts[String(city.districts[0])];
-  const from: [number, number] = [cityLon, cityLat];
-  const to: [number, number] = [homeLon, homeLat];
-  const lines: CardFacts['lines'] = [];
-
-  const km = haversineKm(from, to);
-  lines.push({ text: `${formatIndian(Math.round(km / 10) * 10)} km away, as the crow flies`, source: 'distance' });
-
-  const route = data.routes.routes[cityId]?.[homeDistrict];
-  if (route) {
-    const [hours, number, via] = route;
-    const name = data.trains.get(number);
-    const train = name ? `${number} ${name}` : number;
-    const time =
-      hours < 1.5
-        ? `about ${Math.max(5, Math.round((hours * 60) / 5) * 5)} min`
-        : `about ${Math.round(hours)} h`;
-    lines.push(
-      via === undefined
-        ? { text: `Fastest direct train: ${train}, ${time}`, source: TIMETABLE }
-        : {
-            text: `Nearest direct train goes to ${data.routes.districts[String(via)][0]}: ${train}, ${time}`,
-            source: TIMETABLE,
-          },
-    );
-  } else {
-    lines.push({ text: `No direct train listed in ${TIMETABLE}`, source: TIMETABLE });
-  }
-
-  const inCity = new Set(city.districts);
-  const specials = data.specials.filter(
-    (s) => isHomeward(s) && s.oDistrict != null && inCity.has(s.oDistrict) && s.dState === homeState,
-  );
-  lines.push(
-    specials.length
-      ? {
-          text: `${specials.length} verified festival special${specials.length > 1 ? 's' : ''} from ${city.name} to ${homeState} this season`,
-          source: `official railway notices, as of ${SPECIALS_AS_OF}`,
-        }
-      : {
-          text: `No verified festival special from ${city.name} to ${homeState} yet`,
-          source: `official railway notices, as of ${SPECIALS_AS_OF}`,
-        },
-  );
-
-  if (homeState !== cityState) {
-    const share = data.travel.shares[homeState]?.[cityState];
-    if (share !== undefined && share >= 0.01) {
-      lines.push({
-        text: `In ${data.travel.year}, ${share.toFixed(1)}% of long-distance unreserved train trips from ${homeState} went to ${spoken(cityState)}`,
-        source: 'EAC-PM migration study, railway ticket data',
-      });
-    }
-  }
-  if (homeState2011 !== cityState2011) {
-    const people = city.districts.reduce(
-      (sum, d) => sum + (data.migration.districts[String(d)]?.from[homeState2011] ?? 0),
-      0,
-    );
-    if (people > 0) {
-      const from = homeState2011 === homeState ? homeState : `undivided ${homeState2011}`;
-      lines.push({
-        text: `${formatIndian(people)} people from ${from} lived in ${city.name}`,
-        source: 'Census 2011, the latest count; Census 2027 results are pending',
-      });
-    }
-  }
-
-  const narration = data.narrations?.cards[`${cityId}|${homeState}`] ?? null;
-  return { title: `${city.name} → ${homeName}`, from, to, narration, lines };
 }
 
 // ---- drawing -------------------------------------------------------------
@@ -206,29 +74,13 @@ export function drawCard(canvas: HTMLCanvasElement, facts: CardFacts, states: St
 
   ctx.fillStyle = '#ffb347';
   ctx.font = font(40, 600);
-  ctx.fillText('GHAR WAPSI · MY JOURNEY HOME', 90, 140);
+  ctx.fillText('HOMEWARD · MY TRAIN HOME', 90, 140);
   ctx.fillStyle = '#f3f1ea';
   ctx.font = font(72, 700);
   const titleLines = wrap(ctx, facts.title, W - 180);
   titleLines.forEach((line, i) => ctx.fillText(line, 90, 235 + i * 84));
 
-  // The story line in English and Hindi sits under the title.
   let top = 235 + titleLines.length * 84 - 20;
-  if (facts.narration) {
-    ctx.fillStyle = '#ffd27a';
-    ctx.font = font(40, 500);
-    for (const part of wrap(ctx, facts.narration.en, W - 180)) {
-      top += 52;
-      ctx.fillText(part, 90, top);
-    }
-    ctx.fillStyle = '#c9cfdd';
-    ctx.font = font(36, 400);
-    top += 14;
-    for (const part of wrap(ctx, facts.narration.hi, W - 180)) {
-      top += 50;
-      ctx.fillText(part, 90, top);
-    }
-  }
   top += 30;
 
   // Measure the facts first; the map takes whatever height is left.

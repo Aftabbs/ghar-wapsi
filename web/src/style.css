@@ -34,40 +34,282 @@ main {
   inset: 0;
 }
 
-.title {
+/* The panel: beside the map on wide screens, a bottom sheet on phones. */
+.panel {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  pointer-events: none;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 60dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  border-radius: 18px 18px 0 0;
+  background: rgba(7, 11, 22, 0.94);
+  backdrop-filter: blur(6px);
+}
+
+@media (min-width: 760px) {
+  .panel {
+    top: 16px;
+    left: 16px;
+    right: auto;
+    bottom: 40px;
+    width: 420px;
+    max-height: none;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+  }
 }
 
 h1 {
   margin: 0;
-  font-size: clamp(1.6rem, 5vw, 2.6rem);
-  letter-spacing: 0.02em;
+  font-size: clamp(1.5rem, 5vw, 2.2rem);
+  letter-spacing: 0.01em;
 }
 
 .tagline {
-  margin: 4px 0 0;
+  margin: 2px 0 12px;
   color: var(--muted);
-  font-size: clamp(0.95rem, 2.6vw, 1.15rem);
+  font-size: 1rem;
 }
 
-.hud {
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 40px;
-  max-width: 460px;
-  padding: 14px 16px;
-  border-radius: 14px;
-  background: var(--panel);
-  backdrop-filter: blur(6px);
+.answered .season {
+  display: none;
+}
+
+.season {
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: rgba(255, 179, 71, 0.08);
+  font-size: 0.9rem;
+}
+
+button.link {
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--focus);
+  text-decoration: underline;
+}
+
+button.link[aria-pressed='true'] {
+  background: none;
+  color: var(--focus);
+  font-weight: 600;
+}
+
+.search {
+  display: grid;
+  grid-template-columns: 1fr 48px;
+  gap: 8px;
+  align-items: end;
+}
+
+.search .field {
+  grid-column: 1;
+  display: grid;
+  gap: 4px;
+}
+
+.search label {
+  font-weight: 600;
+}
+
+.hint {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.search input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #121b31;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* 16px stops phones zooming in on focus */
+}
+
+.search input::placeholder {
+  color: #7f89a3;
+}
+
+.swap {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  min-width: 44px;
+  width: 48px;
+  padding: 0;
+  font-size: 1.3rem;
+}
+
+.find {
+  grid-column: 1 / span 2;
+  min-height: 50px;
+  font-size: 1.05rem;
+}
+
+#search-hint {
+  grid-column: 1 / span 2;
+  margin: 0;
+  min-height: 0;
+}
+
+.result {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.result h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.result h3 {
+  margin: 18px 0 6px;
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.headline {
+  margin: 4px 0 10px;
+  color: var(--focus);
+  font-weight: 600;
+}
+
+.note {
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #121b31;
+  font-size: 0.92rem;
+}
+
+.steps {
+  margin: 0;
+  padding-left: 22px;
+}
+
+.steps li {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.times b {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.wait {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  color: var(--focus);
+}
+
+.fares {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fares li {
+  display: grid;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.fares b {
+  font-size: 1rem;
+}
+
+.specials,
+.people {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.92rem;
+}
+
+.specials li,
+.people li {
+  margin-bottom: 8px;
+}
+
+.specials .small {
+  display: block;
+}
+
+.result a {
+  color: var(--focus);
+}
+
+.result details {
+  margin: 4px 0 8px;
+  font-size: 0.92rem;
+}
+
+.result summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 4px;
+}
+
+/* On phones the share button stays in reach while the answer scrolls. */
+@media (max-width: 759px) {
+  .actions {
+    position: sticky;
+    bottom: calc(-16px - env(safe-area-inset-bottom));
+    margin: 14px -16px 0;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(7, 11, 22, 0.98);
+    border-top: 1px solid var(--border);
+  }
+  .actions button {
+    flex: 1;
+  }
+}
+
+.map-tools {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.clock-line {
+  margin: 0;
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
 }
 
 .clock {
-  margin: 0;
-  font-size: clamp(2.2rem, 9vw, 3.4rem);
+  font-size: 1.6rem;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   color: var(--accent);
@@ -75,26 +317,14 @@ h1 {
 }
 
 .legend {
-  margin: 6px 0 0;
-  font-size: 1rem;
-}
-
-.caveat {
-  margin: 4px 0 0;
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.caveat a,
-.attribution a {
-  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .controls {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 button {
@@ -107,13 +337,6 @@ button {
   color: var(--text);
   font: inherit;
   cursor: pointer;
-}
-
-.modes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
 }
 
 button[aria-pressed='true'] {
@@ -146,10 +369,18 @@ input[type='range'] {
 }
 
 .status {
-  margin: 8px 0 0;
+  margin: 6px 0 0;
   font-size: 0.85rem;
   color: var(--muted);
-  min-height: 1.2em;
+}
+
+.status:empty {
+  display: none;
+}
+
+.map-tools .small a,
+.attribution a {
+  color: var(--muted);
 }
 
 .attribution {
@@ -161,6 +392,17 @@ input[type='range'] {
   font-size: 0.7rem;
   color: var(--muted);
   background: rgba(7, 11, 22, 0.85);
+}
+
+/* Phones: the sheet covers the bottom, so the credits sit at the top of the map. */
+@media (max-width: 759px) {
+  .attribution {
+    top: 0;
+    bottom: auto;
+    padding: 4px 10px;
+    font-size: 0.62rem;
+    background: rgba(7, 11, 22, 0.6);
+  }
 }
 
 .skip {
@@ -184,36 +426,6 @@ input[type='range'] {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
-}
-
-/* Short screens (landscape phones, small laptop windows): keep the map visible. */
-@media (max-height: 640px) {
-  .title h1 {
-    font-size: 1.4rem;
-  }
-  .tagline {
-    font-size: 0.9rem;
-  }
-  .hud {
-    bottom: 32px;
-    padding: 10px 12px;
-  }
-  .clock {
-    font-size: 2rem;
-  }
-  .legend {
-    font-size: 0.9rem;
-  }
-  .controls {
-    margin-top: 8px;
-  }
-}
-
-@media (min-width: 760px) {
-  .hud {
-    right: auto;
-    width: 440px;
-  }
 }
 
 button.primary,
@@ -263,24 +475,8 @@ dialog::backdrop {
   }
 }
 
-.card-form h2 {
-  margin: 0 0 12px;
-}
-
-.card-form label {
-  display: grid;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-select {
-  min-height: 44px;
-  padding: 0 10px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: #18223b;
-  color: var(--text);
-  font: inherit;
+.card-layout h2 {
+  margin: 0 0 8px;
 }
 
 .card-actions {
@@ -302,29 +498,6 @@ select {
   border-radius: 12px;
   border: 1px solid var(--border);
   justify-self: center;
-}
-
-.narration {
-  margin: 0 0 12px;
-  padding: 12px 14px;
-  border-left: 3px solid var(--accent);
-  background: rgba(255, 179, 71, 0.07);
-  border-radius: 8px;
-}
-
-.narration-en {
-  margin: 0 0 6px;
-  color: #ffd27a;
-  font-size: 1.05rem;
-}
-
-.narration-hi {
-  margin: 0 0 8px;
-  font-family: 'Noto Sans Devanagari', 'Nirmala UI', 'Kohinoor Devanagari', system-ui, sans-serif;
-}
-
-.narration figcaption {
-  margin: 0;
 }
 
 .info {
@@ -410,5 +583,6 @@ select {
     width: auto;
     max-height: 55dvh;
     border-radius: 14px 14px 0 0;
+    z-index: 6;
   }
 }

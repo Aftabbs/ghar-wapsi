@@ -1,7 +1,8 @@
 // Explore mode: what the info panel says about a tapped train, station, district or state.
 // Pure functions over the published data, so every line can be traced and tested.
 
-import type { Migration, RailTravel, RouteData } from './card';
+import type { Migration, RailTravel } from './card';
+import type { Places } from './places';
 import { isHomeward, type Special } from './festival';
 
 export interface ExploreTrain {
@@ -39,7 +40,7 @@ export interface Panel {
   source: string;
 }
 
-const CLASS_NAMES: Record<string, string> = {
+export const CLASS_NAMES: Record<string, string> = {
   '1A': 'First AC',
   '2A': 'AC 2-tier',
   '3A': 'AC 3-tier',
@@ -67,14 +68,14 @@ function dayNote(minute: number, start: number): string {
   return day > 0 ? ` (day ${day + 1})` : '';
 }
 
-function hours(minutes: number): string {
+export function hours(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = Math.round(minutes % 60);
   return m ? `${h} h ${m} min` : `${h} h`;
 }
 
 /** "12627 Karnataka Express", or just the number when the timetable prints no name. */
-function trainLabel(train: ExploreTrain): string {
+export function trainLabel(train: ExploreTrain): string {
   return train.name && train.name !== train.n ? `${train.n} ${train.name}` : train.n;
 }
 
@@ -114,8 +115,12 @@ function oneFare(data: FareData, category: string, cls: string, km: number, supe
 }
 
 /** Estimated fare range per class: the distance is an estimate, and superfast status is
- * known only from the train number, so the range spans both. */
-export function fareRanges(train: ExploreTrain, data: FareData): { cls: string; low: number; high: number }[] {
+ * known only from the train number, so the range spans both. `km` is the part ridden. */
+export function fareRanges(
+  train: ExploreTrain,
+  data: FareData,
+  km = train.km,
+): { cls: string; low: number; high: number }[] {
   const cat = fareCategory(train.name);
   if (!cat) return [];
   const likelySuperfast = /^(12|20|22)/.test(train.n);
@@ -123,8 +128,8 @@ export function fareRanges(train: ExploreTrain, data: FareData): { cls: string; 
   for (const cls of FARE_ORDER) {
     if (!train.classes.includes(cls)) continue;
     const mult = cat.multiplier?.[cls] ?? 1;
-    const low = oneFare(data, cat.category, cls, train.km * (1 - DISTANCE_ERROR), likelySuperfast, mult);
-    const high = oneFare(data, cat.category, cls, train.km * (1 + DISTANCE_ERROR), true, mult);
+    const low = oneFare(data, cat.category, cls, km * (1 - DISTANCE_ERROR), likelySuperfast, mult);
+    const high = oneFare(data, cat.category, cls, km * (1 + DISTANCE_ERROR), true, mult);
     if (low != null && high != null) out.push({ cls, low, high });
   }
   return out;
@@ -213,7 +218,7 @@ export function stationPanel(code: string, data: ExploreData, specials: Special[
     { label: 'Trains', value: `${calls.length} trains in the timetable stop here` },
   ];
   if (fromHere || toHere) {
-    rows.push({ label: 'Festival specials', value: `${fromHere} start here · ${toHere} end here (verified)` });
+    rows.push({ label: 'Special trains this season', value: `${fromHere} start here · ${toHere} end here (verified)` });
   }
   return {
     kind: 'station',
@@ -233,11 +238,11 @@ export function stationPanel(code: string, data: ExploreData, specials: Special[
 
 export function districtPanel(
   code: string,
-  routes: RouteData,
+  places: Places,
   migration: Migration,
   data: ExploreData,
 ): Panel {
-  const [name, state2011, , , state] = routes.districts[code];
+  const [name, state2011, , , state] = places.districts[code];
   const stations = Object.entries(data.stations).filter(([, s]) => String(s[3]) === code);
   const busiest = stations
     .map(([c, s]) => ({ name: s[0], code: c, trains: data.trains.filter((t) => t.stops.some((x) => x[0] === c)).length }))
@@ -285,7 +290,7 @@ export function statePanel(state: string, travel: RailTravel, specials: Special[
       value: shares.map(([s, p]) => `${spoken(s)} ${p.toFixed(1)}%`).join(' · '),
     });
   }
-  rows.push({ label: 'Festival specials', value: `${inbound} verified specials heading home here this season` });
+  rows.push({ label: 'Special trains this season', value: `${inbound} verified specials from the big cities` });
   if (top.length) {
     rows.push({ label: 'Newcomers came from (2011)', value: top.map(([s, n]) => `${spoken(s)} ${n.toLocaleString('en-IN')}`).join(' · ') });
   }

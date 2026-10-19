@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-import type { Migration, RailTravel, RouteData } from './card';
+import type { Migration, RailTravel } from './card';
 import {
   clock,
   districtPanel,
@@ -15,12 +15,13 @@ import {
   trainPanel,
 } from './explore';
 import type { Special } from './festival';
+import type { Places } from './places';
 
 const load = (name: string) =>
   JSON.parse(readFileSync(fileURLToPath(new URL(`../public/data/${name}`, import.meta.url)), 'utf8'));
 const explore: ExploreData = load('explore.json');
 const fares: FareData = load('fares.json');
-const routes: RouteData = load('routes.json');
+const places: Places = load('places.json');
 const migration: Migration = load('migration-2011.json');
 const travel: RailTravel = load('rail-travel-2023.json');
 const specials: Special[] = load('specials-2026.json');
@@ -69,8 +70,8 @@ describe('panels', () => {
   });
 
   it('shows where a district’s newcomers came from', () => {
-    const panel = districtPanel('572', routes, migration, explore);
-    expect(panel.title).toBe('Bangalore');
+    const panel = districtPanel('572', places, migration, explore);
+    expect(panel.title).toBe('Bengaluru');
     expect(panel.rows.find((r) => r.label === 'Came from (2011)')!.value).toMatch(/^Tamil Nadu 5,83,467/);
   });
 

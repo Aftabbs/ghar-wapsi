@@ -4,18 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
-    <title>How this was made · Ghar Wapsi</title>
-    <meta name="description" content="Sources, checks and limits behind the Ghar Wapsi train map." />
+    <title>How this was made · Homeward</title>
+    <meta name="description" content="Sources, checks and limits behind Homeward, the train-home finder." />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%230b1020'/><circle cx='16' cy='16' r='5' fill='%23ffb347'/></svg>" />
     <link rel="stylesheet" href="/src/methods.css" />
     <script data-goatcounter="https://aftab.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
   </head>
   <body>
     <main class="doc">
-      <p><a href="./">← Back to the map</a></p>
+      <p><a href="./">← Back to Homeward</a></p>
       <h1>How this was made</h1>
       <p class="lede">
-        Every number on the map and on the cards comes from a public, official source, and each
+        Every number in an answer, on the map and on the cards comes from a public source, and each
         one is labelled with that source and its date. Where the newest data is not yet published,
         the page says so instead of guessing.
       </p>
@@ -32,7 +32,7 @@
             <td>Effective 1 Jan 2026</td>
           </tr>
           <tr>
-            <td>Festival special trains</td>
+            <td>Special trains for the season (now Diwali and Chhath 2026)</td>
             <td>Press releases on official zonal railway websites (<code>*.indianrailways.gov.in</code>), one link per train</td>
             <td>Checked 17 Oct 2026</td>
           </tr>
@@ -59,11 +59,22 @@
         </tbody>
       </table>
 
+      <h2>How a train is found</h2>
+      <ul>
+        <li>You can search any Census district under its name today (Gurugram, Prayagraj, Bengaluru), the big cities that span several districts (Delhi, Mumbai, Hyderabad), or any station in the timetable. Old names (Gurgaon, Allahabad, Bangalore) find the same place. Leh and Kargil are listed under Ladakh, and Telangana districts under Telangana.</li>
+        <li>A place's stations are those in its district, plus any within 35 km of the district's centre.</li>
+        <li><strong>Direct trains first.</strong> For every train, we board at its last stop in your start place before it reaches your destination, and get off at the first stop there. Up to three of the quickest are shown.</li>
+        <li><strong>One change.</strong> With no direct train, we look for two trains that meet at the same station, or at two stations within 12 km of each other in the same town. A change needs at least 45 minutes, or 2 hours across town. The quickest total, including the wait, is shown.</li>
+        <li><strong>No station, or no useful one.</strong> If a place has no station in the timetable, or its own stations connect to nothing useful (a hill line, for example), we try the busier stations nearby, up to 150 km further on. Road kilometres count against a station, so a nearer one wins unless a farther one saves real time. The answer names the station and its straight-line distance. Ladakh, Lakshadweep and the Andaman and Nicobar Islands have no railway yet, and the answer says so.</li>
+        <li>Trains at a Glance lists principal stops only. A small station may be served by trains that are not shown, so always check on NTES or IRCTC.</li>
+        <li>Days of running are those printed in the timetable for the train's starting station. For a change, check that both trains run on the days you need.</li>
+      </ul>
+
       <h2>Why one figure is from 2011</h2>
       <p>
         The Census is the only official count of how many people from one state live in another.
         The last one was in 2011. Census 2027 counts the population in February–March 2027, and its
-        migration tables will follow later. Until then, the card shows the 2011 count with its date,
+        migration tables will follow later. Until then, the answer and the card show the 2011 count with its date,
         next to the newer 2023 rail-travel figure, which shows where people travel but does not count
         residents.
       </p>
@@ -78,7 +89,7 @@
 
       <h2>Reading the official timetable</h2>
       <p>Trains at a Glance is published as 97 PDF tables. A program reads every table and checks every train; the full counts are in
-        <a href="https://github.com/Aftabbs/ghar-wapsi/blob/main/pipeline/report.json">report.json</a>.</p>
+        <a href="https://github.com/Aftabbs/homeward/blob/main/pipeline/report.json">report.json</a>.</p>
       <ul>
         <li><strong>2,626 of 3,576 trains</strong> are read and pass every check. The rest are left out rather than shown wrongly.</li>
         <li>A train is left out if its times run backwards, if its parts in different tables do not join up, if fewer than two of its stations can be identified, or if it would need to travel faster than 160 km/h or take more than 90 hours.</li>
@@ -86,20 +97,20 @@
         <li><strong>Cross-check:</strong> for the 596 trains that start and end at the same stations in an independent 2016 timetable, the median 2026 journey time is 0.99 times the 2016 one, and 97.8% are within 25% of it.</li>
       </ul>
 
-      <h2>Festival specials</h2>
+      <h2>Special trains</h2>
       <ul>
         <li>Only trains announced on an official railway website are included, each linked to its notice. Trains seen only on news or booking sites are left out, so the real number is higher.</li>
-        <li>A special counts as "heading home" when it leaves a big work hub (Delhi, Mumbai, Bengaluru, Hyderabad, Chennai, Gujarat, Punjab, Haryana, Kerala) for a state people travel home to.</li>
+        <li>Special trains run for a holiday rush and are added season by season. An answer lists the specials still running (by their last date) from near your start to your home state. On the map, a special counts as "heading home" when it leaves a big work hub (Delhi, Mumbai, Bengaluru, Hyderabad, Chennai, Gujarat, Punjab, Haryana, Kerala) for a state people travel home to.</li>
         <li>Specials with published times move on the map. Those without times are drawn as faint routes and never animated.</li>
       </ul>
 
-      <h2>The card</h2>
+      <h2>The answer and the card</h2>
       <ul>
-        <li><strong>Distance</strong> is a straight line between the city and the centre of the home district.</li>
-        <li><strong>Fastest direct train</strong> is from Trains at a Glance 2026. If no train stops in the district, the card names the nearest district within 60 km that has one, or says there is none. Journeys with a change are not counted.</li>
-        <li><strong>Specials</strong> counts verified festival specials from the city to the home state.</li>
+                <li><strong>The train</strong> is found as described above, from Trains at a Glance 2026.</li>
+        <li><strong>Fares</strong> are estimated for the part of each train you ride, as explained under Explore mode below. For a trip with a change, the two fares are added, for the classes both trains have.</li>
+        <li><strong>Special trains</strong> counts the verified specials still running from near your start to your home state.</li>
         <li><strong>Rail travel (2023)</strong> is the share of unreserved long-distance train trips starting in the home state that ended in the city's state. It is a share of trips, not a number of people.</li>
-        <li><strong>People (2011)</strong> is the Census count of people living in the city whose previous home was in that state, for every reason (work, marriage, study, family). Telangana was part of Andhra Pradesh in 2011, so Telangana homes are counted as "undivided Andhra Pradesh".</li>
+        <li><strong>People (2011)</strong> is the Census count of people living in your start district (or city) whose previous home was in that state, for every reason (work, marriage, study, family). Telangana was part of Andhra Pradesh in 2011, so Telangana homes are counted as "undivided Andhra Pradesh".</li>
       </ul>
 
       <h2 id="explore">Explore mode</h2>
@@ -111,20 +122,12 @@
         <li>Fares leave out meals (charged extra on Rajdhani, Shatabdi and Duronto), Tatkal, demand-based pricing and concessions, and are not shown for trains with their own fare rules (Vande Bharat Sleeper, Amrit Bharat, Jan Shatabdi and others). Always check the fare on IRCTC before booking.</li>
       </ul>
 
-      <h2 id="ai">The story line on each card</h2>
-      <ul>
-        <li>The short English and Hindi line at the top of a card comes from 32 sentence templates, two for each situation: whether festival specials are running, whether the home state celebrates Chhath, and how large the community in the city is.</li>
-        <li>The templates were drafted with an AI model (<code>gpt-oss-120b</code>, run through Groq) from plain descriptions of each situation, then edited by hand for accuracy and Hindi grammar. The program fills in the city and state names, so every line on the site is one a person has read.</li>
-        <li>The lines contain no figures; the exact numbers on the card come straight from the sources above. A check rejects any template with digits, quantity words, a festival that does not fit, or Hindi not written in Devanagari.</li>
-        <li>Your visit never sends anything to an AI service.</li>
-      </ul>
-
       <h2>Privacy</h2>
       <p>The site has no accounts and stores nothing about you. Visits are counted with
-        <a href="https://www.goatcounter.com/">GoatCounter</a>, which uses no cookies. Your card is made in your browser and is not uploaded anywhere.</p>
+        <a href="https://www.goatcounter.com/">GoatCounter</a>, which uses no cookies. Your search and your card are worked out in your browser and are not uploaded anywhere. Visit counts record only the two states of a search, never the places.</p>
 
       <h2>Found a mistake?</h2>
-      <p><a href="https://github.com/Aftabbs/ghar-wapsi/issues">Open an issue on GitHub</a> with the train number or district and the source that shows the right value. Always confirm a journey on NTES or IRCTC before you travel.</p>
+      <p><a href="https://github.com/Aftabbs/homeward/issues">Open an issue on GitHub</a> with the train number or district and the source that shows the right value. Always confirm a journey on NTES or IRCTC before you travel.</p>
     </main>
   </body>
 </html>
