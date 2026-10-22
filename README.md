@@ -5,7 +5,7 @@ gives the fastest train in the official 2026 timetable, an estimated fare range,
 trains running this season, and how many people make the same trip, with a source next to
 every figure.
 
-**Live:** [aftabbs.github.io/native-place](https://aftabbs.github.io/native-place/)
+**Live:** [native-place.pages.dev](https://native-place.pages.dev/) (mirror: [aftabbs.github.io/native-place](https://aftabbs.github.io/native-place/))
 
 <p>
   <img src="docs/screenshot-laptop.png" alt="The search panel showing Bengaluru to Patna: the fastest direct train, fares and special trains, with the route lit in gold on a dark map of India" width="68%">
@@ -47,7 +47,7 @@ every figure.
 | Boundaries | Survey of India outline via [DataMeet maps](https://github.com/datameet/maps) | — |
 
 Census 2027 migration tables are not yet published; the answer shows the 2011 count with its
-date beside the 2023 rail-travel figure. The [methods page](https://aftabbs.github.io/native-place/methods.html)
+date beside the 2023 rail-travel figure. The [methods page](https://native-place.pages.dev/methods.html)
 explains every check and limit.
 
 ### How the timetable is checked
