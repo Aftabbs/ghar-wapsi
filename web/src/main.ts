@@ -1,6 +1,5 @@
 import { Deck, FlyToInterpolator, type MapViewState, WebMercatorViewport } from '@deck.gl/core';
 import { TripsLayer } from '@deck.gl/geo-layers';
-import { GeoJsonLayer, PathLayer, ScatterplotLayer, TextLayer } from '@deck.gl/layers';
 
 import { activeTrips, clockLabel, DAY, loadTrips, type TripBuffers, WINDOW } from './data';
 import {
@@ -14,11 +13,10 @@ import {
   exploreBaseLayers,
   exploreTopLayers,
   loadExplore,
-  loadSearch,
   panelFor,
   renderPanel,
 } from './exploreUi';
-import { type Route, setupSearch } from './search';
+import { type Route, setupSearch, warmSearch } from './search';
 import './style.css';
 
 const DATA = `${import.meta.env.BASE_URL}data/`;
@@ -117,17 +115,37 @@ function initialView(): MapViewState {
   return fitView(INDIA_BOUNDS);
 }
 
-function tripsLayer(id: string, trips: TripBuffers, color: [number, number, number], width: number) {
-  return new TripsLayer({
-    id,
-    data: {
+// One data object per trip file. A new object each frame would make deck.gl re-process
+// every train point on every frame, which was the main cause of lag on phones.
+const binaryData = new WeakMap<TripBuffers, object>();
+function tripData(trips: TripBuffers) {
+  let data = binaryData.get(trips);
+  if (!data) {
+    data = {
       length: trips.length,
       startIndices: trips.startIndices,
       attributes: {
         getPath: { value: trips.positions, size: 2 },
         getTimestamps: { value: trips.timestamps, size: 1 },
       },
-    },
+    };
+    binaryData.set(trips, data);
+  }
+  return data;
+}
+
+const LONG_COLOR: [number, number, number] = [255, 196, 110];
+const REST_COLOR: [number, number, number] = [255, 140, 70];
+const WHITE: Rgba = [255, 255, 255, 255];
+const ROUTE_COLOR: Rgba = [255, 205, 90, 255];
+const ROAD_COLOR: Rgba = [255, 227, 163, 150];
+const SPECIAL_ARC: Rgba = [255, 205, 90, 70];
+const BORDER: Rgba = [44, 60, 96, 255];
+
+function tripsLayer(id: string, trips: TripBuffers, color: [number, number, number], width: number) {
+  return new TripsLayer({
+    id,
+    data: tripData(trips) as never,
     // Binary data: positions are flat lon/lat pairs, not [x, y, z] arrays.
     _pathType: 'open',
     currentTime: state.minute,
@@ -137,7 +155,7 @@ function tripsLayer(id: string, trips: TripBuffers, color: [number, number, numb
     widthMinPixels: state.explore ? width + 2 : width,
     pickable: state.explore,
     autoHighlight: state.explore,
-    highlightColor: [255, 255, 255, 255],
+    highlightColor: WHITE,
     capRounded: true,
     jointRounded: true,
     fadeTrail: true,
@@ -147,43 +165,82 @@ function tripsLayer(id: string, trips: TripBuffers, color: [number, number, numb
   });
 }
 
+type Path2 = [number, number][];
+type Rgba = [number, number, number, number];
+const ZERO_TIMES = new WeakMap<Path2, number[]>();
+
+/**
+ * Still lines drawn with the trains' own shader. Every new kind of deck.gl layer
+ * compiles a GPU program, which freezes the page for a second or more on many
+ * phones and Windows laptops; reusing one program keeps the first screen smooth.
+ */
+function staticLines(id: string, paths: Path2[], color: Rgba, width: number, glow = false) {
+  return new TripsLayer<Path2>({
+    id,
+    data: paths,
+    getPath: (p) => p,
+    getTimestamps: (p) => {
+      let zeros = ZERO_TIMES.get(p);
+      if (!zeros) ZERO_TIMES.set(p, (zeros = p.map(() => 0)));
+      return zeros;
+    },
+    // Every vertex has time 0, inside the window (currentTime - trailLength, currentTime].
+    currentTime: 1,
+    trailLength: 2,
+    fadeTrail: false,
+    getColor: color,
+    widthMinPixels: width,
+    capRounded: true,
+    jointRounded: true,
+    parameters: glow ? GLOW : undefined,
+  });
+}
+
+const outlineCache = new WeakMap<object, Path2[]>();
+/** State borders and coastline as plain lines. */
+function stateOutlines(states: unknown): Path2[] {
+  let paths = outlineCache.get(states as object);
+  if (!paths) {
+    paths = [];
+    for (const f of (states as { features: { geometry: { type: string; coordinates: unknown } }[] }).features) {
+      const polygons =
+        f.geometry.type === 'Polygon'
+          ? [f.geometry.coordinates as Path2[]]
+          : f.geometry.type === 'MultiPolygon'
+            ? (f.geometry.coordinates as Path2[][])
+            : [];
+      for (const polygon of polygons) paths.push(...polygon);
+    }
+    outlineCache.set(states as object, paths);
+  }
+  return paths;
+}
+
 function layers() {
   const out = [];
   if (state.explore) {
     out.push(...exploreBaseLayers(state.states, state.zoom));
   } else if (state.states) {
-    out.push(
-      new GeoJsonLayer({
-        id: 'states',
-        data: state.states as never,
-        filled: true,
-        stroked: true,
-        getFillColor: [15, 22, 40, 255],
-        getLineColor: [34, 48, 79, 255],
-        lineWidthMinPixels: 0.6,
-      }),
-    );
+    out.push(staticLines('states', stateOutlines(state.states), BORDER, 0.8));
   }
-  if (state.rest && !state.light) out.push(tripsLayer('rest', state.rest, [255, 140, 70], 1));
-  if (state.long) out.push(tripsLayer('long', state.long, [255, 196, 110], 2));
+  if (state.rest && !state.light) out.push(tripsLayer('rest', state.rest, REST_COLOR, 1));
+  if (state.long) out.push(tripsLayer('long', state.long, LONG_COLOR, 2));
   if (state.festival) out.push(...festivalLayers());
   if (state.route) out.push(...routeLayers(state.route));
   if (state.explore && state.states) out.push(...exploreTopLayers(state.states as never, state.zoom));
   return out;
 }
 
+const specialArcs = new WeakMap<Special[], Path2[]>();
+
 function festivalLayers() {
   const homeward = state.specials.filter(isHomeward);
+  let arcs = specialArcs.get(state.specials);
+  if (!arcs) specialArcs.set(state.specials, (arcs = homeward.map((s) => arcPath(s.from, s.to))));
   return [
     // Every verified homeward special as a faint route, including those whose notice
     // gives no timings (they are drawn but never animated).
-    new PathLayer<Special>({
-      id: 'special-routes',
-      data: homeward,
-      getPath: (s) => arcPath(s.from, s.to),
-      getColor: [...GOLD, 70],
-      widthMinPixels: 1,
-    }),
+    staticLines('special-routes', arcs, SPECIAL_ARC, 1),
     new TripsLayer<SpecialTrip>({
       id: 'special-trips',
       data: state.specialTrips.filter((t) => isHomeward(t.special)),
@@ -198,66 +255,40 @@ function festivalLayers() {
       fadeTrail: true,
       parameters: GLOW,
     }),
-    new ScatterplotLayer<Special>({
-      id: 'special-ends',
-      data: homeward,
-      getPosition: (s) => s.to,
-      getRadius: 3,
-      radiusUnits: 'pixels',
-      getFillColor: [...GOLD, 200],
-    }),
   ];
 }
 
 function routeLayers(route: Route) {
-  const ends = [
-    { at: route.from, label: route.labels[0] },
-    { at: route.to, label: route.labels[1] },
-  ];
   return [
-    new PathLayer<[number, number][]>({
-      id: 'route-road',
-      data: route.roads,
-      getPath: (p) => p,
-      getColor: [255, 227, 163, 150],
-      widthMinPixels: 2,
-    }),
-    new PathLayer<[number, number][]>({
-      id: 'route',
-      data: route.paths,
-      getPath: (p) => p,
-      getColor: [...GOLD, 255],
-      widthMinPixels: 4,
-      capRounded: true,
-      jointRounded: true,
-      parameters: GLOW,
-    }),
-    new ScatterplotLayer<(typeof ends)[number]>({
-      id: 'route-ends',
-      data: ends,
-      getPosition: (e) => e.at,
-      getRadius: 7,
-      radiusUnits: 'pixels',
-      getFillColor: [255, 227, 163, 255],
-      stroked: true,
-      getLineColor: [7, 11, 22, 255],
-      lineWidthMinPixels: 2,
-    }),
-    new TextLayer<(typeof ends)[number]>({
-      id: 'route-labels',
-      data: ends,
-      getPosition: (e) => e.at,
-      getText: (e) => e.label,
-      getSize: 15,
-      getColor: [255, 255, 255, 255],
-      getPixelOffset: [0, -18],
-      fontFamily: 'Noto Sans, system-ui, sans-serif',
-      fontWeight: 600,
-      outlineWidth: 3,
-      outlineColor: [7, 11, 22, 255],
-      fontSettings: { sdf: true },
-    }),
+    staticLines('route-road', route.roads, ROAD_COLOR, 2),
+    staticLines('route', route.paths, ROUTE_COLOR, 4, true),
   ];
+}
+
+// The two ends of a route are HTML, not map layers: no extra GPU program, crisp text.
+const pins = [0, 1].map(() => {
+  const pin = document.createElement('div');
+  pin.className = 'pin';
+  pin.setAttribute('aria-hidden', 'true');
+  pin.hidden = true;
+  pin.append(document.createElement('span'));
+  document.querySelector('main')!.append(pin);
+  return pin;
+});
+
+function placePins() {
+  const viewport = deck.getViewports()[0];
+  const route = state.route;
+  pins.forEach((pin, i) => {
+    if (!route || !viewport) {
+      pin.hidden = true;
+      return;
+    }
+    const [x, y] = viewport.project(i ? route.to : route.from);
+    pin.hidden = false;
+    pin.firstElementChild!.textContent = route.labels[i];
+    pin.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+  });
 }
 
 function showRoute(route: Route | null) {
@@ -293,6 +324,9 @@ const deck = new Deck({
   layers: [],
   // A forgiving tap target: station dots are small, especially under a finger.
   pickingRadius: 12,
+  // Phones have 3x screens; glowing lines look the same at 1.5x and cost a quarter of the pixels.
+  useDevicePixels: Math.min(window.devicePixelRatio || 1, 1.5),
+  onAfterRender: () => placePins(),
   onViewStateChange: ({ viewState }) => {
     // Labels and districts depend on zoom; re-render when it crosses a step.
     const zoom = Math.round((viewState as { zoom: number }).zoom * 4) / 4;
@@ -356,30 +390,58 @@ async function setExplore(on: boolean) {
   render();
 }
 
-let liveShown = -1;
-/** "1,507 trains on the move at 20:08", refreshed once per map minute. */
-function updateLive() {
-  const minute = Math.floor(state.minute);
-  if (minute === liveShown || !state.long) return;
-  liveShown = minute;
-  const moving = activeTrips(state.long, state.minute) + (state.rest ? activeTrips(state.rest, state.minute) : 0);
-  ui.live.textContent = `${moving.toLocaleString('en-IN')} trains on the move at ${clockLabel(state.minute)}`;
+const TEXT_EVERY_MS = 250; // the clock and counts change four times a second, not every frame
+let textAt = 0;
+
+function setText(el: HTMLElement, text: string) {
+  if (el.textContent !== text) el.textContent = text; // an unchanged write still costs a layout
 }
 
-function render() {
+/** Clock, slider and "1,507 trains on the move at 20:08". */
+function updateText(force = false) {
+  const now = performance.now();
+  if (!force && now - textAt < TEXT_EVERY_MS) return;
+  textAt = now;
+  const label = clockLabel(state.minute);
+  setText(ui.clock, label);
+  const slider = String(Math.floor(state.minute - WINDOW[0]));
+  if (ui.time.value !== slider && document.activeElement !== ui.time) ui.time.value = slider;
+  if (state.long) {
+    const moving = activeTrips(state.long, state.minute) + (state.rest ? activeTrips(state.rest, state.minute) : 0);
+    setText(ui.live, `${moving.toLocaleString('en-IN')} trains on the move at ${label}`);
+  }
+}
+
+function render(force = false) {
   deck.setProps({ layers: layers() });
-  updateLive();
-  ui.clock.textContent = clockLabel(state.minute);
-  ui.time.value = String(Math.floor(state.minute - WINDOW[0]));
+  updateText(force || !state.playing);
 }
 
 // Frame loop with a low-end fallback measured from real frame times.
+// While someone types in the search, the map holds still: drawing frames competes with
+// the keyboard on slower phones, and the keyboard covers the map anyway.
+let typing = false;
+const searchForm = document.querySelector<HTMLFormElement>('#search')!;
+searchForm.addEventListener('focusin', (event) => {
+  typing = (event.target as HTMLElement).tagName === 'INPUT';
+});
+searchForm.addEventListener('focusout', () => {
+  typing = false;
+});
+
+// Touch devices draw at most 30 frames a second: the trails move slowly, so it looks the
+// same, and it halves the work for the phone's GPU and battery.
+const MIN_FRAME_MS = window.matchMedia('(pointer: coarse)').matches ? 1000 / 30 - 2 : 0;
 let last = performance.now();
 let slowFrames = 0;
 function frame(now: number) {
+  if (now - last < MIN_FRAME_MS) {
+    requestAnimationFrame(frame);
+    return;
+  }
   const elapsed = now - last;
   last = now;
-  if (state.playing) {
+  if (state.playing && !typing) {
     state.minute += Math.min(elapsed, 100) * MINUTES_PER_MS;
     if (state.minute >= WINDOW[1]) state.minute = WINDOW[0] + (state.minute - WINDOW[1]);
     if (!state.light) {
@@ -443,6 +505,8 @@ document.addEventListener('keydown', (event) => {
 
 async function start() {
   setPlaying(state.playing);
+  // Compile the one map shader while the train data downloads, not after it arrives.
+  deck.setProps({ layers: [staticLines('warm-up', [[[0, 0], [0.001, 0]]], [0, 0, 0, 0], 1)] });
   try {
     const [states, long, specials] = await Promise.all([
       fetch(`${DATA}india-states.json`).then((r) => r.json()),
@@ -477,8 +541,9 @@ async function start() {
     render();
     document.body.dataset.ready = 'true'; // for scripted checks
     // Fetch the timetable for search while the visitor reads, so the first answer is instant.
-    const idle = window.requestIdleCallback ?? ((fn: () => void) => setTimeout(fn, 1500));
-    idle(() => void loadSearch(DATA).catch(() => undefined));
+    // The animated map means the page is rarely idle, so give the idle wait a deadline.
+    const idle = window.requestIdleCallback ?? ((fn: () => void) => setTimeout(fn, 500));
+    idle(() => void warmSearch(), { timeout: 1000 });
   } catch (error) {
     ui.status.textContent = 'The train data could not be loaded. Please refresh the page.';
     console.error(error);

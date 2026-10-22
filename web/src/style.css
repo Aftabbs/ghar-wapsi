@@ -47,8 +47,7 @@ main {
   padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--border);
   border-radius: 18px 18px 0 0;
-  background: rgba(7, 11, 22, 0.94);
-  backdrop-filter: blur(6px);
+  background: rgba(7, 11, 22, 0.95); /* no backdrop blur: re-blurring the live map every frame is costly */
 }
 
 @media (min-width: 760px) {
@@ -229,6 +228,36 @@ button.link[aria-pressed='true'] {
   grid-column: 1;
   display: grid;
   gap: 4px;
+  position: relative;
+}
+
+.suggestions {
+  position: absolute;
+  z-index: 3;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 4px 0 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #0f1729;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.suggestions li {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.suggestions li:hover,
+.suggestions li[aria-selected='true'] {
+  background: #1c2847;
 }
 
 .search label {
@@ -697,4 +726,40 @@ dialog::backdrop {
     border-radius: 14px 14px 0 0;
     z-index: 6;
   }
+}
+
+/* Route ends: a dot on the place with its name above. */
+.pin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.pin::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: -7px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  background: #ffe3a3;
+  box-sizing: border-box;
+}
+
+.pin span {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  transform: translateX(-50%);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  text-shadow: 0 0 3px var(--bg), 0 0 3px var(--bg), 0 0 6px var(--bg);
 }

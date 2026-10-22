@@ -20,6 +20,7 @@ export interface Place {
   lon: number;
   lat: number;
   terms: string[]; // normalised names to match a search against
+  key: string; // the normalised label
 }
 
 export function spoken(state: string | null | undefined): string {
@@ -36,7 +37,7 @@ export function normalise(text: string): string {
 }
 
 export function buildPlaces(places: Places, explore: ExploreData): Place[] {
-  const out: Place[] = [];
+  const out: Omit<Place, 'key'>[] = [];
   for (const city of Object.values(places.cities)) {
     const parts = city.districts.map((d) => places.districts[String(d)]).filter(Boolean);
     const [, state2011, , , state] = parts[0];
@@ -81,7 +82,8 @@ export function buildPlaces(places: Places, explore: ExploreData): Place[] {
       terms: [normalise(name), code.toLowerCase()],
     });
   }
-  return out;
+  // Normalised once here, not on every keystroke.
+  return out.map((p) => ({ ...p, key: normalise(p.label) }));
 }
 
 const KIND_ORDER = { city: 0, district: 1, station: 2 };
@@ -92,9 +94,8 @@ export function searchPlaces(query: string, places: Place[], limit = 8): Place[]
   if (!q) return [];
   const scored: { place: Place; score: number }[] = [];
   for (const place of places) {
-    const label = normalise(place.label);
-    if (label === q) return [place];
-    let score = label.startsWith(q) ? 1 : Infinity;
+    if (place.key === q) return [place];
+    let score = place.key.startsWith(q) ? 1 : Infinity;
     for (const term of place.terms) {
       if (term === q) score = Math.min(score, 0);
       else if (term.startsWith(q)) score = Math.min(score, 1);
@@ -104,7 +105,8 @@ export function searchPlaces(query: string, places: Place[], limit = 8): Place[]
     if (score < Infinity) scored.push({ place, score: score * 3 + KIND_ORDER[place.kind] });
   }
   return scored
-    .sort((a, b) => a.score - b.score || a.place.label.localeCompare(b.place.label))
+    // Ties: the shorter name is the closer match ("Bengaluru" before "Bengaluru Rural").
+    .sort((a, b) => a.score - b.score || a.place.name.length - b.place.name.length || a.place.label.localeCompare(b.place.label))
     .slice(0, limit)
     .map((s) => s.place);
 }

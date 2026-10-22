@@ -38,6 +38,20 @@ test('the first screen says what the site does and an example answers in one tap
   await expect(page.locator('.examples')).toBeHidden();
 });
 
+test('suggestions work by keyboard, know old names, and pass accessibility checks', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.locator('body')).toHaveAttribute('data-ready', 'true', { timeout: 30_000 });
+  await page.locator('#from').pressSequentially('bangal');
+  await expect(page.locator('#from-suggestions li').first()).toHaveText('Bengaluru, Karnataka', { timeout: 30_000 });
+  await expect(page.locator('#from')).toHaveAttribute('aria-expanded', 'true');
+  const results = await new AxeBuilder({ page }).include('#search').withTags(['wcag2a', 'wcag2aa', 'wcag22aa']).analyze();
+  expect(results.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#from')).toHaveValue('Bengaluru, Karnataka');
+  await expect(page.locator('#from-suggestions')).toBeHidden();
+});
+
 test('a place with no railway gets the nearest station, not a blank', async ({ page }) => {
   await page.goto('./?from=Delhi&to=Leh');
   await expect(page.locator('#result-title')).toHaveText('Delhi → Leh', { timeout: 30_000 });

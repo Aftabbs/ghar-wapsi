@@ -119,6 +119,7 @@ def station_index(pdf_path: Path, display: dict[str, str] | None = None) -> dict
                     if x_name - 2 <= w["x0"] < x_end - 2 and w["top"] > 60:
                         lines[round(w["top"])].append(w)
                 pending = ""
+                last = None  # the entry a wrapped line continues: only one in this column
                 for top in sorted(lines):
                     row = sorted(lines[top], key=lambda w: w["x0"])
                     name = " ".join(w["text"] for w in row if w["x0"] < x_code - 4)
@@ -127,18 +128,17 @@ def station_index(pdf_path: Path, display: dict[str, str] | None = None) -> dict
                         continue
                     if code and re.fullmatch(r"[A-Z]{1,5}", code):
                         full = f"{pending} {name}".strip()
-                        out[normalise(full)] = code
+                        last = normalise(full)
+                        out[last] = code
                         if display is not None and len(full) > 2:
                             display.setdefault(code, full)
                         pending = ""
-                    elif name and not code:
+                    elif name and not code and last is not None:
                         # A name that wraps: the code sits on the first line, so this
-                        # line continues the previous entry.
-                        last = next(reversed(out), None)
-                        if last is not None:
-                            out[normalise(f"{last} {name}")] = out[last]
-                            if display is not None and out[last] in display:
-                                display[out[last]] = f"{display[out[last]]} {name}"
+                        # line continues the entry above it in the same column.
+                        out[normalise(f"{last} {name}")] = out[last]
+                        if display is not None and out[last] in display:
+                            display[out[last]] = f"{display[out[last]]} {name}"
     return out
 
 

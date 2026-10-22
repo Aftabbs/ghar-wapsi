@@ -40,15 +40,14 @@
         <form id="search" class="search" role="search" aria-label="Find a train">
           <div class="field">
             <label for="from">From <span class="hint">where you live</span></label>
-            <input id="from" name="from" list="places" autocomplete="off" spellcheck="false" placeholder="e.g. Bengaluru" required />
+            <input id="from" name="from" autocomplete="off" spellcheck="false" placeholder="e.g. Bengaluru" required />
           </div>
           <button id="swap" type="button" class="swap" aria-label="Swap From and To">⇅</button>
           <div class="field">
             <label for="to">To <span class="hint">your native place</span></label>
-            <input id="to" name="to" list="places" autocomplete="off" spellcheck="false" placeholder="e.g. Patna, or your district" required />
+            <input id="to" name="to" autocomplete="off" spellcheck="false" placeholder="e.g. Patna, or your district" required />
           </div>
           <button id="find" type="submit" class="primary find">Find my train</button>
-          <datalist id="places"></datalist>
           <p id="search-hint" class="small" aria-live="polite"></p>
         </form>
 

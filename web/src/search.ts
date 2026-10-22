@@ -7,6 +7,7 @@ import { loadSearch } from './exploreUi';
 import type { Special } from './festival';
 import { legPath } from './journey';
 import { buildPlaces, type Place, searchPlaces, spoken } from './places';
+import { attachSuggest } from './suggest';
 
 export interface Route {
   paths: [number, number][][];
@@ -81,11 +82,17 @@ function renderAnswer(a: Answer): string {
     </div>`;
 }
 
+let warm: (() => Promise<unknown>) | null = null;
+
+/** Download the timetable and build the place index before anyone types. */
+export function warmSearch() {
+  return warm?.().catch(() => undefined);
+}
+
 export function setupSearch(inputs: Inputs) {
   const form = $<HTMLFormElement>('#search');
   const from = $<HTMLInputElement>('#from');
   const to = $<HTMLInputElement>('#to');
-  const list = $<HTMLDataListElement>('#places');
   const hint = $<HTMLParagraphElement>('#search-hint');
   const result = $<HTMLElement>('#result');
   const dialog = $<HTMLDialogElement>('#card-dialog');
@@ -102,13 +109,9 @@ export function setupSearch(inputs: Inputs) {
     const loaded = await loadSearch(inputs.dataUrl);
     if (!places) {
       places = buildPlaces(loaded.places, loaded.explore);
-      list.replaceChildren(
-        ...places.map((p) => {
-          const option = new Option(p.terms.length > 1 && p.kind === 'district' ? `also ${p.terms.slice(1).join(', ')}` : '', p.label);
-          option.value = p.label;
-          return option;
-        }),
-      );
+      // Someone may have typed before the places arrived: suggest for what is there.
+      const typing = [from, to].find((input) => input === document.activeElement);
+      if (typing?.value) typing.dispatchEvent(new Event('input'));
     }
     return { loaded, places };
   }
@@ -192,6 +195,8 @@ export function setupSearch(inputs: Inputs) {
     cardHint.textContent = share.disabled ? 'Download the card, or press and hold it to save.' : 'Share it, or download it.';
   }
 
+  warm = ready;
+
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     search();
@@ -207,8 +212,11 @@ export function setupSearch(inputs: Inputs) {
   $<HTMLButtonElement>('#swap').addEventListener('click', () => {
     [from.value, to.value] = [to.value, from.value];
   });
-  // Fetch the timetable as soon as someone starts typing.
-  for (const input of [from, to]) input.addEventListener('focus', () => void ready(), { once: true });
+  // Fetch the timetable as soon as someone starts typing, then suggest places.
+  for (const input of [from, to]) {
+    input.addEventListener('focus', () => void ready(), { once: true });
+    attachSuggest(input, () => places);
+  }
   $<HTMLButtonElement>('#card-close').addEventListener('click', () => dialog.close());
   dialog.addEventListener('close', () => document.querySelector<HTMLButtonElement>('#make-card')?.focus());
   share.addEventListener('click', () => {
