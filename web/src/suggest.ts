@@ -6,7 +6,11 @@ import { normalise, type Place, searchPlaces } from './places';
 
 const LIMIT = 8;
 
-export function attachSuggest(input: HTMLInputElement, places: () => Place[] | null) {
+export function attachSuggest(
+  input: HTMLInputElement,
+  places: () => Place[] | null,
+  more: (text: string) => Promise<Place[]> = async () => [],
+) {
   const list = document.createElement('ul');
   list.id = `${input.id}-suggestions`;
   list.className = 'suggestions';
@@ -24,6 +28,7 @@ export function attachSuggest(input: HTMLInputElement, places: () => Place[] | n
 
   function close() {
     list.hidden = true;
+    list.replaceChildren();
     input.setAttribute('aria-expanded', 'false');
     input.removeAttribute('aria-activedescendant');
     active = -1;
@@ -42,12 +47,28 @@ export function attachSuggest(input: HTMLInputElement, places: () => Place[] | n
   }
 
   function update() {
-    const all = places();
-    items = all ? searchPlaces(input.value, all, LIMIT) : [];
+    const base = places();
+    show(base ? searchPlaces(input.value, base, LIMIT) : []);
+    // Towns and villages arrive a moment later, from a small file for these letters.
+    const typed = input.value;
+    void more(typed).then((towns) => {
+      if (towns.length && base && input.value === typed && document.activeElement === input) {
+        show(searchPlaces(typed, [...base, ...towns], LIMIT));
+      }
+    });
+  }
+
+  function show(found: Place[]) {
+    items = found;
     // Nothing to pick when the box already names the top match exactly ("Patna", "Bangalore"):
     // keep the list from covering the Find button.
     const typed = normalise(input.value);
-    if (!items.length || items[0].key === typed || items[0].terms.includes(typed)) return close();
+    // Close once a place is chosen, or when only one place could be meant. With every village
+    // searchable, a half-typed name ("Kadu") is often some village's full name, so an exact
+    // match alone is no reason to close.
+    const chosen = items[0]?.label === input.value;
+    const only = items.length === 1 && (items[0].key === typed || items[0].terms.includes(typed));
+    if (!items.length || chosen || only) return close();
     list.replaceChildren(
       ...items.map((p, i) => {
         const li = document.createElement('li');

@@ -63,3 +63,15 @@ class DistrictIndex:
         if self._geoms[nearest].distance(point) <= COASTAL_TOLERANCE_DEG:
             return self.districts[nearest]
         return None
+
+    def locate_many(self, points: list[tuple[float, float]]) -> list[int | None]:
+        """Census district code for each (lon, lat), in one vectorised pass."""
+        import shapely
+
+        geoms = shapely.points(points)
+        out: list[int | None] = [None] * len(points)
+        point_idx, district_idx = self._tree.query(geoms, predicate="intersects")
+        for p, d in zip(point_idx.tolist(), district_idx.tolist(), strict=True):
+            if out[p] is None:
+                out[p] = self.districts[d].census_code
+        return out

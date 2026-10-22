@@ -6,6 +6,7 @@ import type { ExploreData, ExploreTrain } from './explore';
 import type { Place } from './places';
 
 const NEAR_KM = 35; // stations this close to a district's centre count as that district's
+const IN_TOWN_KM = 3; // a main station this close to a town is the town's own
 const RAILHEAD_KM = 600; // furthest we look for a nearest station
 const MIN_CHANGE_MIN = 45; // shortest sensible time to change trains
 const MIN_CROSS_TOWN_MIN = 120; // changing to another station in the same city
@@ -13,7 +14,7 @@ const SAME_CITY_KM = 12;
 const WIDER_KM = 150; // when a place's own stations lead nowhere, look this far
 const MAX_OPTIONS = 3;
 const RAILHEAD_CANDIDATES = 20;
-const ROAD_MIN_PER_KM = 1.5; // to weigh a longer road trip to a better-served station
+const ROAD_MIN_PER_KM = 3; // road time per km, bus waits included: a train to the door beats a fast one far away
 const CHANGE_LEGS_KEPT = 8; // per station, the quickest legs in and out considered for a change
 
 // No railway line reaches these yet, so "no station" is not a gap in the data.
@@ -42,6 +43,9 @@ export interface Railhead {
 export interface Journey {
   options: Option[];
   kind: 'direct' | 'change' | 'none';
+  date?: string; // YYYY-MM-DD the traveller asked for
+  // Nothing runs on that date, so these options run on other days.
+  dateMiss?: boolean;
   // Set when a place has no station in the timetable and the nearest one is used.
   fromRailhead?: Railhead;
   toRailhead?: Railhead;
@@ -66,9 +70,12 @@ export function stationsFor(place: Place, data: ExploreData, wider = false): End
   const inside = new Set(place.districts);
   const codes = new Set<string>(place.station ? [place.station] : []);
   const all: [string, number][] = [];
+  // A town is one point, not a whole district: only a main station in the town itself is its own.
+  const town = place.kind === 'town';
   for (const [code, [, lon, lat, district]] of Object.entries(data.stations)) {
     const km = haversineKm(place.lon, place.lat, lon, lat);
-    if (!place.station && ((district != null && inside.has(district)) || km <= NEAR_KM)) codes.add(code);
+    const own = town ? km <= IN_TOWN_KM : (district != null && inside.has(district)) || km <= NEAR_KM;
+    if (!place.station && own) codes.add(code);
     else if (!codes.has(code)) all.push([code, km]);
   }
   if (codes.size && !wider) return { codes, own: codes.size };
@@ -81,6 +88,27 @@ export function stationsFor(place: Place, data: ExploreData, wider = false): End
   return { codes: new Set([...codes, ...nearby.map(([c]) => c)]), own: codes.size, roadKm };
 }
 
+export const WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+/** Weekday of a YYYY-MM-DD date moved by whole days. */
+export function weekday(date: string, plusDays = 0): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + plusDays);
+  return WEEK[(d.getUTCDay() + 6) % 7];
+}
+
+/**
+ * Does the train leave this stop on the date (moved by plusDays)? The timetable prints the
+ * days for the starting station, and a train that left yesterday reaches later stops today.
+ * null when the timetable lists no days.
+ */
+export function runsOn(train: ExploreTrain, stop: number, date: string, plusDays = 0): boolean | null {
+  if (!train.days.length) return null;
+  if (train.days.includes('Daily')) return true;
+  const dayAtStop = Math.floor(train.stops[stop][2] / 1440);
+  return train.days.includes(weekday(date, plusDays - dayAtStop));
+}
+
 function leg(train: ExploreTrain, board: number, alight: number): Leg {
   return { train, board, alight, dep: train.stops[board][2], arr: train.stops[alight][1] };
 }
@@ -89,19 +117,21 @@ function legMinutes(l: Leg): number {
   return l.arr - l.dep;
 }
 
-/** Each train's quickest ride between the two sets: board at the last stop in the first set
- * before it reaches the second. */
+/**
+ * Every way to ride each train from the first set to the second. With nearby stations in a
+ * set, the nearest one is not always the first the train reaches (Tumakuru comes before
+ * Birur on the way to Kadur), so every boarding and alighting stop is a candidate; the cost
+ * then picks one per train.
+ */
 function directLegs(trains: ExploreTrain[], from: Set<string>, to: Set<string>): Leg[] {
   const out: Leg[] = [];
   for (const train of trains) {
-    let board = -1;
+    const boards: number[] = [];
     for (let i = 0; i < train.stops.length; i++) {
       const code = train.stops[i][0];
-      if (from.has(code)) board = i;
-      else if (board >= 0 && to.has(code)) {
-        out.push(leg(train, board, i));
-        break;
-      }
+      if (to.has(code) && !from.has(code)) {
+        for (const b of boards) out.push(leg(train, b, i));
+      } else if (from.has(code)) boards.push(i);
     }
   }
   return out;
@@ -143,7 +173,7 @@ function hubs(data: ExploreData): Map<string, string> {
   return hub;
 }
 
-function oneChange(data: ExploreData, from: Set<string>, to: Set<string>): Option[] {
+function oneChange(data: ExploreData, from: Set<string>, to: Set<string>, date?: string): Option[] {
   const hub = hubs(data);
   // Every hub reachable from the start, and every hub with a train on to the end.
   const out = new Map<string, Leg[]>();
@@ -182,6 +212,14 @@ function oneChange(data: ExploreData, from: Set<string>, to: Set<string>): Optio
         const least = sameStation ? MIN_CHANGE_MIN : MIN_CROSS_TOWN_MIN;
         let wait = (((b.dep - a.arr) % 1440) + 1440) % 1440;
         if (wait < least) wait += 1440;
+        if (date) {
+          if (runsOn(a.train, a.board, date) === false) continue;
+          // Wait a day longer, up to a week, until the second train runs that day.
+          let tries = 0;
+          const boardDay = () => Math.floor(((a.dep % 1440) + legMinutes(a) + wait) / 1440);
+          while (runsOn(b.train, b.board, date, boardDay()) === false && tries++ < 6) wait += 1440;
+          if (runsOn(b.train, b.board, date, boardDay()) === false) continue;
+        }
         options.push({ legs: [a, b], wait, minutes: legMinutes(a) + wait + legMinutes(b) });
       }
     }
@@ -189,7 +227,7 @@ function oneChange(data: ExploreData, from: Set<string>, to: Set<string>): Optio
   return options;
 }
 
-function search(data: ExploreData, start: Ends, end: Ends): Journey {
+function search(data: ExploreData, start: Ends, end: Ends, date?: string): Journey {
   if (!start.codes.size || !end.codes.size) return { options: [], kind: 'none' };
   const first = (o: Option) => o.legs[0].train.stops[o.legs[0].board][0];
   const last = (o: Option) => {
@@ -199,9 +237,20 @@ function search(data: ExploreData, start: Ends, end: Ends): Journey {
   const road = (o: Option) => (start.roadKm?.get(first(o)) ?? 0) + (end.roadKm?.get(last(o)) ?? 0);
   const cost = (o: Option) => o.minutes + ROAD_MIN_PER_KM * road(o);
 
-  const direct = directLegs(data.trains, start.codes, end.codes).map((l) => ({ legs: [l], minutes: legMinutes(l) }));
-  const options = best(direct.length ? direct : oneChange(data, start.codes, end.codes), cost);
-  const kind = !options.length ? 'none' : direct.length ? 'direct' : 'change';
+  const allDirect = directLegs(data.trains, start.codes, end.codes).map((l) => ({ legs: [l], minutes: legMinutes(l) }));
+  // On a chosen date: direct that day, then a change that day, then whatever runs on other days.
+  const direct = date ? allDirect.filter((o) => runsOn(o.legs[0].train, o.legs[0].board, date) !== false) : allDirect;
+  let changes: Option[] = [];
+  if (!direct.length) changes = oneChange(data, start.codes, end.codes, date);
+  let pool = direct.length ? direct : changes;
+  let dateMiss = false;
+  if (date && !pool.length) {
+    pool = allDirect.length ? allDirect : oneChange(data, start.codes, end.codes);
+    dateMiss = pool.length > 0;
+  }
+  const options = best(pool, cost);
+  const isDirect = options[0]?.legs.length === 1;
+  const kind = !options.length ? 'none' : isDirect ? 'direct' : 'change';
   // Name the station actually used when it is not in the place itself.
   const railhead = (ends: Ends, code: string | undefined): Railhead | undefined => {
     const km = code === undefined ? undefined : ends.roadKm?.get(code);
@@ -210,16 +259,21 @@ function search(data: ExploreData, start: Ends, end: Ends): Journey {
   return {
     options,
     kind,
+    date,
+    dateMiss: dateMiss || undefined,
     fromRailhead: railhead(start, options[0] && first(options[0])),
     toRailhead: railhead(end, options[0] && last(options[0])),
   };
 }
 
-export function findJourney(from: Place, to: Place, data: ExploreData): Journey {
-  const journey = search(data, stationsFor(from, data), stationsFor(to, data));
-  if (journey.kind !== 'none') return journey;
-  // The place's own stations lead nowhere useful (a hill line, a new branch): try nearby ones.
-  return search(data, stationsFor(from, data, true), stationsFor(to, data, true));
+export function findJourney(from: Place, to: Place, data: ExploreData, date?: string): Journey {
+  const journey = search(data, stationsFor(from, data), stationsFor(to, data), date);
+  if (journey.kind !== 'none' && !journey.dateMiss) return journey;
+  // The place's own stations lead nowhere useful (a hill line, a new branch), or not on that
+  // date: try the busier stations nearby.
+  const wider = search(data, stationsFor(from, data, true), stationsFor(to, data, true), date);
+  if (wider.kind === 'none' || (wider.dateMiss && journey.kind !== 'none')) return journey;
+  return wider;
 }
 
 /** Rail distance for part of a train's run: its share of the straight-line route, scaled to

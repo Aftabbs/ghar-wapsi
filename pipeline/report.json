@@ -1,7 +1,10 @@
 {
   "places": {
     "districts": 640,
-    "renamed_or_aliased": 122
+    "renamed_or_aliased": 122,
+    "towns_and_stations": 533836,
+    "with_station": 8571,
+    "from_geonames": 549008
   },
   "stations": {
     "datameet_stations": 8697,
@@ -169,12 +172,18 @@
       "bytes": 55877
     },
     {
-      "file": "places.json",
-      "bytes": 41624
-    },
-    {
       "file": "explore.json",
       "bytes": 878970
+    },
+    {
+      "folder": "towns",
+      "files": 1885,
+      "largest_bytes": 311354,
+      "total_bytes": 21106045
+    },
+    {
+      "file": "places.json",
+      "bytes": 41624
     }
   ]
 }

@@ -13,7 +13,7 @@ test('search finds a train home, highlights it, and makes a card', async ({ page
 
   await page.fill('#from', 'Bangalore');
   await page.fill('#to', 'Patna');
-  await page.click('#find');
+  await page.press('#to', 'Enter'); // Enter searches when no suggestion is highlighted
   await expect(page.locator('#result-title')).toHaveText('Bengaluru → Patna', { timeout: 30_000 });
   await expect(page.locator('#from')).toHaveValue('Bengaluru, Karnataka');
   await expect(page.locator('.steps li').first()).toContainText('→');
@@ -31,7 +31,7 @@ test('search finds a train home, highlights it, and makes a card', async ({ page
 
 test('the first screen says what the site does and an example answers in one tap', async ({ page }) => {
   await page.goto('./');
-  await expect(page.locator('h1')).toHaveText('Going to native? Find your train.');
+  await expect(page.locator('h1')).toHaveText('Find the train to your hometown');
   await expect(page.locator('#live')).toContainText('trains on the move at', { timeout: 30_000 });
   await page.getByRole('button', { name: 'Chennai → Madurai' }).click();
   await expect(page.locator('#result-title')).toHaveText('Chennai → Madurai', { timeout: 30_000 });
@@ -50,6 +50,25 @@ test('suggestions work by keyboard, know old names, and pass accessibility check
   await page.keyboard.press('Enter');
   await expect(page.locator('#from')).toHaveValue('Bengaluru, Karnataka');
   await expect(page.locator('#from-suggestions')).toBeHidden();
+});
+
+test('a small town can be found, and a date narrows the trains', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.locator('body')).toHaveAttribute('data-ready', 'true', { timeout: 30_000 });
+  await page.fill('#from', 'Bengaluru');
+  await page.locator('#to').pressSequentially('Kadur');
+  // Two towns are called Kadur; the district tells them apart.
+  const kadur = page.getByRole('option', { name: 'Kadur, Chikkamagaluru, Karnataka' });
+  await expect(kadur).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('option', { name: /^Kad[uū]r, Chitradurga/ })).toBeVisible();
+  await kadur.click();
+  await expect(page.locator('#to')).toHaveValue('Kadur, Chikkamagaluru, Karnataka');
+  await page.fill('#when', '2026-11-02');
+  await page.press('#when', 'Enter');
+  await expect(page.locator('#result-title')).toHaveText('Bengaluru → Kadur, Mon 2 Nov', { timeout: 30_000 });
+  await expect(page.locator('.note').first()).toContainText('Kadur station is not a main stop');
+  await expect(page.locator('.when-tag').first()).toHaveText('Mon 2 Nov');
+  expect(page.url()).toContain('date=2026-11-02');
 });
 
 test('a place with no railway gets the nearest station, not a blank', async ({ page }) => {

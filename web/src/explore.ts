@@ -71,6 +71,7 @@ function dayNote(minute: number, start: number): string {
 export function hours(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = Math.round(minutes % 60);
+  if (!h) return `${m} min`;
   return m ? `${h} h ${m} min` : `${h} h`;
 }
 
@@ -175,7 +176,9 @@ export function trainPanel(train: ExploreTrain, data: ExploreData, fares: FareDa
   if (ranges.length) {
     rows.push({
       label: 'Fare (estimate)',
-      value: ranges.map((r) => `${CLASS_NAMES[r.cls]} ₹${r.low.toLocaleString('en-IN')}–${r.high.toLocaleString('en-IN')}`).join(' · '),
+      value: ranges
+        .map((r) => `${CLASS_NAMES[r.cls]} ₹${r.low.toLocaleString('en-IN')}${r.high > r.low ? `–${r.high.toLocaleString('en-IN')}` : ''}`)
+        .join(' · '),
     });
   }
   const fact =

@@ -46,18 +46,24 @@ def _get(url: str, data: bytes | None = None) -> bytes:
         return response.read()
 
 
-def fetch_osm_stations(target: Path) -> None:
-    body = urllib.parse.urlencode({"data": OSM_STATIONS_QUERY}).encode()
-    payload = None
+def _overpass(query: str) -> dict:
+    body = urllib.parse.urlencode({"data": query}).encode()
     for attempt, mirror in enumerate(OVERPASS_MIRRORS * 2):
         try:
-            payload = json.loads(_get(mirror, body))
-            break
+            return json.loads(_get(mirror, body))
         except (OSError, ValueError) as err:  # HTTP errors, dropped connections, bad JSON
             print(f"       {mirror} failed ({err}); retrying")
             time.sleep(5 * (attempt + 1))
-    if payload is None:
-        raise RuntimeError("every Overpass mirror failed")
+    raise RuntimeError("every Overpass mirror failed")
+
+
+# Populated places from GeoNames (CC BY 4.0), including villages, so a hometown without a
+# main station (Kadur, say) can still be searched.
+GEONAMES_INDIA = "https://download.geonames.org/export/dump/IN.zip"
+
+
+def fetch_osm_stations(target: Path) -> None:
+    payload = _overpass(OSM_STATIONS_QUERY)
     stations = [
         {
             "ref": el["tags"]["ref"],
@@ -112,6 +118,13 @@ def main() -> int:
     else:
         print("fetch  osm-stations.json (Overpass)")
         fetch_osm_stations(osm)
+    geonames = RAW / "geonames" / "IN.zip"
+    if geonames.exists():
+        print("have   geonames/IN.zip")
+    else:
+        print("fetch  geonames/IN.zip")
+        geonames.parent.mkdir(exist_ok=True)
+        geonames.write_bytes(_get(GEONAMES_INDIA))
     fetch_census_d02(RAW / "census-d02")
     return 0
 

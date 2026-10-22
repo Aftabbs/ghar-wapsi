@@ -2,10 +2,10 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-import { answer, type Context, specialsFor } from './answer';
+import { answer, type Context, dayLabel, specialsFor } from './answer';
 import type { ExploreData } from './explore';
 import type { Special } from './festival';
-import { findJourney, haversineKm } from './journey';
+import { findJourney, haversineKm, runsOn, weekday } from './journey';
 import { buildPlaces, type Place, type Places, searchPlaces } from './places';
 
 const load = (name: string) =>
@@ -98,5 +98,45 @@ describe('answers', () => {
     const later = specialsFor(from, to, { ...ctx, today: '2027-06-01' });
     expect(now.length).toBeGreaterThan(0);
     expect(later).toEqual([]);
+  });
+});
+
+describe('dates', () => {
+  it('names weekdays and dates', () => {
+    expect(weekday('2026-10-30')).toBe('Fri');
+    expect(weekday('2026-10-30', 3)).toBe('Mon');
+    expect(dayLabel('2026-10-31')).toBe('Sat 31 Oct');
+  });
+
+  it('counts days from where the train starts', () => {
+    const weekly = explore.trains.find((t) => t.days.length === 1 && t.days[0] !== 'Daily' && t.stops.some((s) => s[2] >= 1440))!;
+    const later = weekly.stops.findIndex((s) => s[2] >= 1440); // reached a day after it left
+    const start = '2026-11-02'; // a Monday; find the first date this train starts
+    let first = start;
+    for (let i = 0; i < 7 && weekday(first) !== weekly.days[0]; i++) first = new Date(Date.parse(first) + 86400000).toISOString().slice(0, 10);
+    expect(runsOn(weekly, 0, first)).toBe(true);
+    expect(runsOn(weekly, later, first)).toBe(false);
+    expect(runsOn(weekly, later, first, 1)).toBe(true);
+  });
+
+  it('keeps only trains that leave on the chosen day, or says nothing runs then', () => {
+    const from = place('Bengaluru');
+    const to = place('Patna, Bihar');
+    for (const date of ['2026-11-02', '2026-11-03', '2026-11-04']) {
+      const j = findJourney(from, to, explore, date);
+      for (const o of j.options) {
+        if (j.dateMiss) continue;
+        expect(runsOn(o.legs[0].train, o.legs[0].board, date)).not.toBe(false);
+      }
+    }
+  });
+
+  it('lists only specials running on the chosen date', () => {
+    const from = place('Bengaluru');
+    const to = place('Patna, Bihar');
+    const onDate = specialsFor(from, to, { ...ctx, date: '2026-11-01' });
+    const afterSeason = specialsFor(from, to, { ...ctx, date: '2027-01-15' });
+    expect(onDate.every((s) => !s.first || s.first <= '2026-11-01')).toBe(true);
+    expect(afterSeason).toEqual([]);
   });
 });

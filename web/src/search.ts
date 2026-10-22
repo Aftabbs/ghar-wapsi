@@ -6,8 +6,9 @@ import { CLASS_NAMES } from './explore';
 import { loadSearch } from './exploreUi';
 import type { Special } from './festival';
 import { legPath } from './journey';
-import { buildPlaces, type Place, searchPlaces, spoken } from './places';
+import { buildPlaces, type Place, type Places, searchPlaces, spoken } from './places';
 import { attachSuggest } from './suggest';
+import { townsFor } from './towns';
 
 export interface Route {
   paths: [number, number][][];
@@ -40,6 +41,7 @@ function renderAnswer(a: Answer): string {
     .map(
       (s, i) => `
       <li>
+        ${s.when ? `<span class="when-tag">${esc(s.when)}</span>` : ''}
         <strong>${esc(s.train)}</strong>
         <span class="times">${esc(s.from)} <b>${esc(s.dep)}</b> → ${esc(s.to)} <b>${esc(s.arr)}</b></span>
         <span class="small">${esc(s.duration)} · ${esc(s.days)}</span>
@@ -50,7 +52,7 @@ function renderAnswer(a: Answer): string {
   const fares = a.fares.length
     ? `<h3>Fare per person (estimate)</h3>
        <ul class="fares">${a.fares
-         .map((f) => `<li><span>${esc(CLASS_NAMES[f.cls] ?? f.cls)}</span> <b>₹${rupees(f.low)}–${rupees(f.high)}</b></li>`)
+         .map((f) => `<li><span>${esc(CLASS_NAMES[f.cls] ?? f.cls)}</span> <b>₹${rupees(f.low)}${f.high > f.low ? `–${rupees(f.high)}` : ''}</b></li>`)
          .join('')}</ul>
        <p class="small">From the official fare tables. Meals, Tatkal and dynamic pricing are not included.</p>`
     : '';
@@ -93,6 +95,8 @@ export function setupSearch(inputs: Inputs) {
   const form = $<HTMLFormElement>('#search');
   const from = $<HTMLInputElement>('#from');
   const to = $<HTMLInputElement>('#to');
+  const when = $<HTMLInputElement>('#when');
+  when.min = today(); // trains in the past are no use
   const hint = $<HTMLParagraphElement>('#search-hint');
   const result = $<HTMLElement>('#result');
   const dialog = $<HTMLDialogElement>('#card-dialog');
@@ -116,15 +120,19 @@ export function setupSearch(inputs: Inputs) {
     return { loaded, places };
   }
 
-  function resolve(text: string, all: Place[]): Place | null {
-    return searchPlaces(text, all, 1)[0] ?? null;
+  /** The place someone meant: districts, cities and main stations first, then towns. */
+  async function resolve(text: string, all: Place[], data: Places): Promise<Place | null> {
+    const towns = await townsFor(text, inputs.dataUrl, data);
+    return searchPlaces(text, [...all, ...towns], 1)[0] ?? null;
   }
 
   async function search() {
     hint.textContent = 'Looking up trains…';
     const { loaded, places: all } = await ready();
-    const a = resolve(from.value, all);
-    const b = resolve(to.value, all);
+    const [a, b] = await Promise.all([
+      resolve(from.value, all, loaded.places),
+      resolve(to.value, all, loaded.places),
+    ]);
     if (!a || !b) {
       hint.textContent = `We could not find “${!a ? from.value : to.value}”. Try a district, city or station name.`;
       return;
@@ -136,7 +144,8 @@ export function setupSearch(inputs: Inputs) {
     from.value = a.label;
     to.value = b.label;
     hint.textContent = '';
-    const ans = answer(a, b, { ...loaded, specials: inputs.specials(), today: today() });
+    const date = when.value && when.value >= today() ? when.value : undefined;
+    const ans = answer(a, b, { ...loaded, specials: inputs.specials(), today: today(), date });
     current = { answer: ans, from: a, to: b };
     result.innerHTML = renderAnswer(ans);
     result.hidden = false;
@@ -151,6 +160,8 @@ export function setupSearch(inputs: Inputs) {
     const url = new URL(location.href);
     url.searchParams.set('from', a.label);
     url.searchParams.set('to', b.label);
+    if (date) url.searchParams.set('date', date);
+    else url.searchParams.delete('date');
     history.replaceState(null, '', url);
     const at = (code: string): [number, number] => {
       const st = loaded.explore.stations[code];
@@ -215,7 +226,11 @@ export function setupSearch(inputs: Inputs) {
   // Fetch the timetable as soon as someone starts typing, then suggest places.
   for (const input of [from, to]) {
     input.addEventListener('focus', () => void ready(), { once: true });
-    attachSuggest(input, () => places);
+    attachSuggest(
+      input,
+      () => places,
+      async (text) => (places ? townsFor(text, inputs.dataUrl, (await ready()).loaded.places) : []),
+    );
   }
   $<HTMLButtonElement>('#card-close').addEventListener('click', () => dialog.close());
   dialog.addEventListener('close', () => document.querySelector<HTMLButtonElement>('#make-card')?.focus());
@@ -232,6 +247,7 @@ export function setupSearch(inputs: Inputs) {
   if (params.get('from') && params.get('to')) {
     from.value = params.get('from')!;
     to.value = params.get('to')!;
+    when.value = params.get('date') ?? '';
     void search();
   }
 }

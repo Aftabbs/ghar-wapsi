@@ -14,7 +14,7 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://native-place.pages.dev/" />
     <meta property="og:site_name" content="Native Place" />
-    <meta property="og:title" content="Going to native? Find your train." />
+    <meta property="og:title" content="Find the train to your hometown" />
     <meta property="og:description" content="Any town in India to your hometown: fastest train, fare range and this season's special trains, from the official 2026 timetable." />
     <meta property="og:image" content="https://native-place.pages.dev/og.png" />
     <meta property="og:image:width" content="1200" />
@@ -34,27 +34,32 @@
 
       <section class="panel" aria-labelledby="site-title">
         <header class="title">
-          <p class="brand"><span class="dot" aria-hidden="true"></span>Native Place</p>
-          <h1 id="site-title">Going to native? <span class="accent">Find your train.</span></h1>
-          <p class="tagline">Any town in India to your hometown: fastest train, fare and this season's special trains, from the official 2026 timetable.</p>
+          <p class="brand"><span class="dot" aria-hidden="true"></span>Native Place <span class="brand-aside">· going to native?</span></p>
+          <h1 id="site-title">Find the train to your <span class="accent">hometown</span></h1>
+          <p class="tagline">See which train to take, the days it runs and what it costs, from the official 2026 railway timetable.</p>
         </header>
 
         <form id="search" class="search" role="search" aria-label="Find a train">
           <div class="field">
-            <label for="from">From <span class="hint">where you live</span></label>
-            <input id="from" name="from" autocomplete="off" spellcheck="false" placeholder="e.g. Bengaluru" required />
+            <label for="from"><span class="step" aria-hidden="true">1</span> Where do you live?</label>
+            <input id="from" name="from" autocomplete="off" spellcheck="false" placeholder="City, town or station, e.g. Bengaluru" required />
           </div>
-          <button id="swap" type="button" class="swap" aria-label="Swap From and To">⇅</button>
+          <button id="swap" type="button" class="swap" aria-label="Swap the two places">⇅</button>
           <div class="field">
-            <label for="to">To <span class="hint">your native place</span></label>
-            <input id="to" name="to" autocomplete="off" spellcheck="false" placeholder="e.g. Patna, or your district" required />
+            <label for="to"><span class="step" aria-hidden="true">2</span> Where is home?</label>
+            <input id="to" name="to" autocomplete="off" spellcheck="false" placeholder="Town, district or station, e.g. Kadur" required />
           </div>
-          <button id="find" type="submit" class="primary find">Find my train</button>
+          <div class="field when">
+            <label for="when"><span class="step" aria-hidden="true">3</span> When? <span class="hint">optional</span></label>
+            <input id="when" name="when" type="date" />
+          </div>
+          <button id="find" type="submit" class="primary find">Show my train</button>
+          <p class="trust small">Free · no sign-up · official railway timetable · book on IRCTC</p>
           <p id="search-hint" class="small" aria-live="polite"></p>
         </form>
 
         <div class="examples" role="group" aria-labelledby="examples-label">
-          <span id="examples-label" class="small">Try one:</span>
+          <span id="examples-label" class="small">Or see an example:</span>
           <button type="button" class="chip" data-from="Bengaluru" data-to="Patna">Bengaluru → Patna</button>
           <button type="button" class="chip" data-from="Mumbai" data-to="Lucknow">Mumbai → Lucknow</button>
           <button type="button" class="chip" data-from="Chennai" data-to="Madurai">Chennai → Madurai</button>
@@ -114,7 +119,7 @@
       </dialog>
     </main>
     <footer class="attribution">
-      <span id="satellite-credit" hidden>Imagery: Sentinel-2 cloudless 2024 by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2024), CC BY-NC-SA 4.0 · </span>Timings: Trains at a Glance 2026, Ministry of Railways · Special trains: zonal railway notices · © OpenStreetMap contributors · Survey of India boundary
+      <span id="satellite-credit" hidden>Imagery: Sentinel-2 cloudless 2024 by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2024), CC BY-NC-SA 4.0 · </span><span class="credit-long">Timings: Trains at a Glance 2026, Ministry of Railways · Special trains: zonal railway notices · Places: GeoNames (CC BY 4.0) · © OpenStreetMap contributors · Survey of India boundary</span><span class="credit-short">Ministry of Railways · GeoNames (CC BY 4.0) · © OpenStreetMap contributors · Survey of India · <a href="methods.html">sources</a></span>
     </footer>
     <script type="module" src="/src/main.ts"></script>
   </body>

@@ -97,13 +97,23 @@ def main() -> int:
 
     districts = DistrictIndex(RAW / "districts-2011.geojson").districts
     place_data, place_report = places.build(districts, boundaries.current_state_locator(RAW))
-    files.append(places.write(place_data, OUT / "places.json"))
 
     distance = explore.calibrate_distance(trips, RAW / "trains.json")
     explore_data, explore_report = explore.build(
         tag_trains, trips, gazetteer, distance["factor"], official_names
     )
     files.append(explore.write(explore_data, OUT / "explore.json"))
+    # Towns, villages and small stations, so a hometown off the main timetable can be searched.
+    town_rows, town_report = places.build_towns(
+        places.read_geonames(RAW / "geonames" / "IN.zip"),
+        gazetteer,
+        set(explore_data["stations"]),
+        DistrictIndex(RAW / "districts-2011.geojson").locate_many,
+        place_data,
+    )
+    files.append(places.write_towns(town_rows, OUT / "towns"))
+    place_report.update(town_report)
+    files.append(places.write(place_data, OUT / "places.json"))
     train_report["rail_distance_calibration"] = distance
     train_report.update(explore_report)
 

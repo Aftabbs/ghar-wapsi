@@ -15,8 +15,12 @@ every figure.
 ## What it does
 
 - **Any place to any place.** Search any of India's 640 districts under the names people
-  use today (Gurugram, Prayagraj, Leh in Ladakh) or any of 867 timetable stations. Old names
-  such as Bangalore, Gurgaon or Calcutta work too.
+  use today (Gurugram, Prayagraj, Leh in Ladakh), any of 867 main timetable stations, or
+  any of about 5.3 lakh towns, villages and small stations (Kadur, say). Old names such as
+  Bangalore, Gurgaon or Calcutta work too. Town and village files load only for the letters
+  typed, so the page stays light.
+- **On your date.** Pick a day and only trains leaving then are shown, counting from the
+  day each train starts; with a change, the second train must run the day you reach it.
 - **The train.** The fastest direct train, its times, days and journey length. With no direct
   train, the quickest trip with one change (in the same station or across town). Where a place
   has no station in the timetable, the nearest useful one and how far away it is; Ladakh,
@@ -44,6 +48,7 @@ every figure.
 | Fares (estimates) | Trains at a Glance 2026 fare tables + Commercial Circular 24/2025 | w.e.f. 1 Jul 2025, revised 26 Dec 2025 |
 | Satellite imagery | [Sentinel-2 cloudless 2024](https://cloudless.eox.at) by EOX, CC BY-NC-SA 4.0 | 2024 |
 | Station locations | [DataMeet](https://github.com/datameet/railways) + [OpenStreetMap](https://www.openstreetmap.org/copyright) | OSM Oct 2026 |
+| Towns and villages | [GeoNames](https://www.geonames.org/) India gazetteer, CC BY 4.0 | Oct 2026 |
 | Boundaries | Survey of India outline via [DataMeet maps](https://github.com/datameet/maps) | — |
 
 Census 2027 migration tables are not yet published; the answer shows the 2011 count with its

@@ -101,13 +101,27 @@ function mapPadding() {
   };
 }
 
+const MIN_MAP_PX = 80; // smallest map area worth fitting into
+
 function fitView(bounds: [[number, number], [number, number]], maxZoom = 12): MapViewState {
-  const { width, height } = { width: window.innerWidth, height: window.innerHeight };
-  const { longitude, latitude, zoom } = new WebMercatorViewport({ width, height }).fitBounds(bounds, {
-    padding: mapPadding(),
-    maxZoom,
-  });
-  return { longitude, latitude, zoom, minZoom: Math.min(zoom, 3), maxZoom: 12 };
+  const width = Math.max(window.innerWidth, 1);
+  const height = Math.max(window.innerHeight, 1);
+  let padding = mapPadding();
+  // On a tiny or squashed window the panel can cover almost everything; fitting into a
+  // negative space throws and would stop the whole page, so use the full window instead.
+  if (width - padding.left - padding.right < MIN_MAP_PX || height - padding.top - padding.bottom < MIN_MAP_PX) {
+    padding = { top: 0, bottom: 0, left: 0, right: 0 };
+  }
+  try {
+    const { longitude, latitude, zoom } = new WebMercatorViewport({ width, height }).fitBounds(bounds, {
+      padding,
+      maxZoom,
+    });
+    return { longitude, latitude, zoom, minZoom: Math.min(zoom, 3), maxZoom: 12 };
+  } catch {
+    const [[w, s], [e, n]] = bounds;
+    return { longitude: (w + e) / 2, latitude: (s + n) / 2, zoom: 3, minZoom: 2, maxZoom: 12 };
+  }
 }
 
 /** Fit India into the space the panel leaves. */

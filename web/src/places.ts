@@ -11,12 +11,14 @@ export interface Places {
 
 export interface Place {
   label: string; // unique; what the search box shows
-  kind: 'city' | 'district' | 'station';
+  kind: 'city' | 'district' | 'station' | 'town'; // town: a town or a station off the main timetable
   name: string;
   state: string; // today's state
   state2011: string; // for the Census counts
   districts: number[];
-  station?: string; // station code, for a station
+  station?: string; // station code, for a station in the timetable
+  localStation?: string; // a town's own station when the timetable does not list it
+  rank?: number; // towns: 0 city ... 4 village, to order equal matches
   lon: number;
   lat: number;
   terms: string[]; // normalised names to match a search against
@@ -31,6 +33,7 @@ export function normalise(text: string): string {
   return text
     .toLowerCase()
     .normalize('NFKD')
+    .replace(/\p{M}/gu, '') // drop accents: "Kadūr" is "kadur", as in the pipeline
     .replace(/[^a-z0-9 ]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -86,7 +89,7 @@ export function buildPlaces(places: Places, explore: ExploreData): Place[] {
   return out.map((p) => ({ ...p, key: normalise(p.label) }));
 }
 
-const KIND_ORDER = { city: 0, district: 1, station: 2 };
+const KIND_ORDER = { city: 0, district: 1, station: 2, town: 3 };
 
 /** Best matches for what someone typed: exact names first, then prefixes, then words. */
 export function searchPlaces(query: string, places: Place[], limit = 8): Place[] {
@@ -106,7 +109,13 @@ export function searchPlaces(query: string, places: Place[], limit = 8): Place[]
   }
   return scored
     // Ties: the shorter name is the closer match ("Bengaluru" before "Bengaluru Rural").
-    .sort((a, b) => a.score - b.score || a.place.name.length - b.place.name.length || a.place.label.localeCompare(b.place.label))
+    .sort(
+      (a, b) =>
+        a.score - b.score ||
+        (a.place.rank ?? 0) - (b.place.rank ?? 0) ||
+        a.place.name.length - b.place.name.length ||
+        a.place.label.localeCompare(b.place.label),
+    )
     .slice(0, limit)
     .map((s) => s.place);
 }
