@@ -2,7 +2,7 @@
 // A <datalist> of every district and station made phones slow on each keystroke;
 // this shows only the best eight matches and understands old names too.
 
-import { type Place, searchPlaces } from './places';
+import { normalise, type Place, searchPlaces } from './places';
 
 const LIMIT = 8;
 
@@ -44,7 +44,10 @@ export function attachSuggest(input: HTMLInputElement, places: () => Place[] | n
   function update() {
     const all = places();
     items = all ? searchPlaces(input.value, all, LIMIT) : [];
-    if (!items.length || (items.length === 1 && items[0].label === input.value)) return close();
+    // Nothing to pick when the box already names the top match exactly ("Patna", "Bangalore"):
+    // keep the list from covering the Find button.
+    const typed = normalise(input.value);
+    if (!items.length || items[0].key === typed || items[0].terms.includes(typed)) return close();
     list.replaceChildren(
       ...items.map((p, i) => {
         const li = document.createElement('li');
