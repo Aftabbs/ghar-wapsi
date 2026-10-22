@@ -90,6 +90,9 @@ export function buildPlaces(places: Places, explore: ExploreData): Place[] {
 }
 
 const KIND_ORDER = { city: 0, district: 1, station: 2, town: 3 };
+// Towns by size (rank 0 city ... 4 village): a village whose name is exactly what you have
+// typed so far ("Benga") must not push Bengaluru off the list.
+const TOWN_PENALTY = [0, 0, 1, 4, 5];
 
 /** Best matches for what someone typed: exact names first, then prefixes, then words. */
 export function searchPlaces(query: string, places: Place[], limit = 8): Place[] {
@@ -105,7 +108,10 @@ export function searchPlaces(query: string, places: Place[], limit = 8): Place[]
       else if (term.split(' ').some((w) => w.startsWith(q))) score = Math.min(score, 2);
       else if (term.includes(q)) score = Math.min(score, 3);
     }
-    if (score < Infinity) scored.push({ place, score: score * 3 + KIND_ORDER[place.kind] });
+    if (score < Infinity) {
+      const size = place.kind === 'town' ? (TOWN_PENALTY[place.rank ?? 4] ?? 5) : 0;
+      scored.push({ place, score: score * 3 + KIND_ORDER[place.kind] + size });
+    }
   }
   return scored
     // Ties: the shorter name is the closer match ("Bengaluru" before "Bengaluru Rural").

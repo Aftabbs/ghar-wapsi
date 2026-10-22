@@ -35,6 +35,11 @@ describe('towns and small stations', () => {
     expect(labels.some((l) => /^Kadūr, Chitradurga/.test(l))).toBe(true);
   });
 
+  it('puts big places before villages while the name is half typed', async () => {
+    expect((await find('Benga'))[0].label).toBe('Bengaluru, Karnataka');
+    expect((await find('Kadu'))[0].label).toBe('Kadur, Chikkamagaluru, Karnataka');
+  });
+
   it('waits for enough letters before fetching a file', async () => {
     expect(await townsFor('k', 'data:', places)).toEqual([]);
   });
