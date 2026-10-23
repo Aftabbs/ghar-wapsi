@@ -820,3 +820,15 @@ dialog::backdrop {
     display: inline;
   }
 }
+
+/* Explore on phones: the map takes the screen; only the map controls stay in the sheet. */
+@media (max-width: 759px) {
+  .exploring .panel > :not(.map-tools) {
+    display: none;
+  }
+  .exploring .panel .map-tools {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+}

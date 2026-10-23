@@ -143,6 +143,8 @@ export function setupSearch(inputs: Inputs) {
     }
     from.value = a.label;
     to.value = b.label;
+    // Put the keyboard away on phones so the answer is visible.
+    if (document.activeElement instanceof HTMLElement && form.contains(document.activeElement)) document.activeElement.blur();
     hint.textContent = '';
     const date = when.value && when.value >= today() ? when.value : undefined;
     const ans = answer(a, b, { ...loaded, specials: inputs.specials(), today: today(), date });

@@ -40,8 +40,18 @@ cdp.on('Page.screencastFrame', async ({ data, metadata, sessionId }) => {
   await cdp.send('Page.screencastFrameAck', { sessionId }).catch(() => {});
 });
 
+// Warm the caches first (explore data, satellite tiles around Bengaluru), so the recording
+// shows the product, not loading spinners. Then start clean.
 await page.goto(base);
 await page.waitForFunction(() => document.body.dataset.ready === 'true', null, { timeout: 60000 });
+await page.locator('#explore').click();
+await page.waitForFunction(() => document.querySelector('#status')?.textContent?.startsWith('Tap a train'), null, { timeout: 90000 });
+await page.evaluate(() => window.nativePlaceMap.flyTo(77.5696, 12.99, 11.3));
+await page.waitForTimeout(6000);
+// Back to the start without a reload, so the warmed data stays in memory.
+await page.locator('#explore').click();
+await page.evaluate(() => window.nativePlaceMap.home());
+await page.evaluate(() => document.querySelector('.panel').scrollTo({ top: 0 }));
 await page.waitForTimeout(1500); // let the map settle before recording starts
 await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: 780, maxHeight: 1688 });
 const t0 = Date.now() / 1000;
@@ -49,43 +59,85 @@ const cues = [];
 const cue = (text) => cues.push({ at: Date.now() / 1000 - t0, text });
 const pause = (ms) => page.waitForTimeout(ms);
 
-cue("Going to native this Diwali?");
-await pause(2200);
-cue("Where do you live?");
+// Scene 1: the hook, the live map.
+cue('Going to native this Diwali?');
+await pause(2000);
+
+// Scene 2: a small town, on a date.
+cue('Where do you live?');
 await page.locator('#from').tap();
-await page.locator('#from').pressSequentially('Bengaluru', { delay: 90 });
+await page.locator('#from').pressSequentially('Bengaluru', { delay: 70 });
 await page.getByRole('option', { name: 'Bengaluru, Karnataka' }).tap();
-await pause(400);
 cue("Where's home? Even a small town works");
 await page.locator('#to').tap();
-await page.locator('#to').pressSequentially('Kadur', { delay: 120 });
+await page.locator('#to').pressSequentially('Kadur', { delay: 100 });
 await page.getByRole('option', { name: 'Kadur, Chikkamagaluru, Karnataka' }).waitFor();
-await pause(900);
+await pause(700);
 await page.getByRole('option', { name: 'Kadur, Chikkamagaluru, Karnataka' }).tap();
-await pause(300);
-cue("Pick your travel date");
+cue('Pick your travel date');
 await page.fill('#when', '2026-11-06');
-await pause(900);
+await pause(600);
 await page.locator('#find').tap();
 await page.waitForSelector('#result-title');
-cue("Your train, from the official timetable");
-await pause(3600);
-cue("Fare for every class");
-await page.evaluate(() => document.querySelector('.panel').scrollBy({ top: 300, behavior: 'smooth' }));
+cue('Your train, from the official timetable');
+await pause(3000);
+
+// Scene 3: across India, with special trains and the people who make the same trip.
+cue('Or anywhere across India');
+await page.locator('#new-search').tap();
+await page.locator('#to').fill('');
+await page.locator('#when').fill('');
+await page.locator('#to').tap();
+await page.locator('#to').pressSequentially('Patna', { delay: 90 });
+await pause(500);
+await page.locator('#to').press('Enter'); // the best match, Patna, Bihar
+await page.waitForSelector('#result-title');
 await pause(2600);
-cue("Share it with family");
+cue('Fare for every class');
+await page.evaluate(() => {
+  const panel = document.querySelector('.panel');
+  const fares = document.querySelector('.fares');
+  panel.scrollTo({ top: fares.offsetTop - 120, behavior: 'smooth' });
+});
+await pause(2200);
+cue('Special trains this season, and who else makes the trip');
+await page.evaluate(() => {
+  const panel = document.querySelector('.panel');
+  const target = document.querySelector('.specials') ?? document.querySelector('.people');
+  panel.scrollTo({ top: target.offsetTop - 140, behavior: 'smooth' });
+});
+await pause(2600);
+cue('Share it with family');
 await page.locator('#make-card').tap();
 await page.waitForSelector('#card-download:not([hidden])');
-await pause(2800);
+await pause(2400);
+await page.locator('#card-close').tap();
+await page.locator('#new-search').tap();
+
+// Scene 4: explore mode.
+cue('Explore every train on a satellite map');
+await page.evaluate(() => document.querySelector('.panel').scrollTo({ top: 1e6 }));
+await page.locator('#explore').tap();
+await page.waitForFunction(() => document.querySelector('#status')?.textContent?.startsWith('Tap a train'), null, { timeout: 60000 });
+await page.evaluate(() => window.nativePlaceMap.flyTo(77.5696, 12.99, 11.3));
+await pause(2600); // satellite tiles and station names appear
+cue('Tap any station for its next trains');
+const at = await page.evaluate(() => window.nativePlaceMap.project(77.5696, 12.9782));
+await page.touchscreen.tap(at[0], at[1]);
+await page.waitForSelector('#info:not([hidden])');
+await pause(1200);
+await page.locator('#info summary').tap(); // open "Next departures"
+await pause(3000);
 const end = Date.now() / 1000 - t0;
 await cdp.send('Page.stopScreencast');
 await browser.close();
 
-// ffmpeg concat list: each frame lasts until the next one arrived.
+// ffmpeg concat list: each frame lasts until the next one. Frames can arrive out of order.
+frames.sort((a, b) => a.t - b.t);
 const lines = [];
 frames.forEach((f, i) => {
   const next = frames[i + 1]?.t ?? f.t + 0.05;
-  lines.push(`file 'frames/${f.file}'`, `duration ${(next - f.t).toFixed(4)}`);
+  lines.push(`file 'frames/${f.file}'`, `duration ${Math.max(next - f.t, 0.001).toFixed(4)}`);
 });
 lines.push(`file 'frames/${frames.at(-1).file}'`);
 writeFileSync(`${out}/frames.txt`, lines.join('\n'));

@@ -377,7 +377,10 @@ const deck = new Deck({
     render();
   },
   explore: (on: boolean) => setExplore(on),
+  home: () => deck.setProps({ initialViewState: initialView() }),
   zoom: () => state.zoom,
+  // Where a place is on screen, in CSS pixels (for scripted demos and tests).
+  project: (longitude: number, latitude: number) => deck.getViewports()[0]?.project([longitude, latitude]) ?? null,
   view: () => {
     const v = deck.getViewports()[0] as unknown as { longitude: number; latitude: number; zoom: number };
     return { longitude: v.longitude, latitude: v.latitude, zoom: v.zoom };
@@ -388,6 +391,8 @@ const deck = new Deck({
 async function setExplore(on: boolean) {
   state.explore = on;
   ui.explore.setAttribute('aria-pressed', String(on));
+  // On phones the search panel shrinks to the map controls, so the map has the screen.
+  document.body.classList.toggle('exploring', on);
   ui.credit.hidden = !on;
   if (on) {
     ui.status.textContent = 'Loading places and timetable…';

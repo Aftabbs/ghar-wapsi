@@ -100,6 +100,8 @@ export function attachSuggest(
     } else if (event.key === 'Enter' && active >= 0) {
       event.preventDefault();
       choose(active);
+    } else if (event.key === 'Enter') {
+      close(); // the form searches with what was typed; the list must not cover the answer
     } else if (event.key === 'Escape') {
       event.preventDefault();
       close();
