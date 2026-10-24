@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import { WINDOW } from './data';
-import { arcPath, isHomeward, type Special, specialTrips, summary } from './festival';
+import { arcPath, coverage, isHomeward, type Special, specialTrips, summary } from './festival';
 
 const specials: Special[] = JSON.parse(
   readFileSync(fileURLToPath(new URL('../public/data/specials-2026.json', import.meta.url)), 'utf8'),
@@ -41,5 +41,14 @@ describe('festival specials', () => {
     expect(s.total).toBe(specials.length);
     expect(s.homeward).toBe(specials.filter(isHomeward).length);
     expect(s.verifiedOn).toBe('2026-10-17');
+  });
+});
+
+describe('coverage', () => {
+  it('says how many railway zones the special-train list covers, and when it was checked', () => {
+    const c = coverage(specials);
+    expect(c.zones).toBe(new Set(specials.map((s) => new URL(s.source).hostname.split('.')[0])).size);
+    expect(c.zones).toBeGreaterThan(0);
+    expect(c.checked).toMatch(/^2026-\d{2}-\d{2}$/);
   });
 });

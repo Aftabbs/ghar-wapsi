@@ -4,7 +4,7 @@ import { type Answer, answer } from './answer';
 import { drawCard } from './card';
 import { CLASS_NAMES } from './explore';
 import { loadSearch } from './exploreUi';
-import type { Special } from './festival';
+import { coverage, type Special } from './festival';
 import { legPath } from './journey';
 import { buildPlaces, type Place, type Places, searchPlaces, spoken } from './places';
 import { attachSuggest } from './suggest';
@@ -36,7 +36,13 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function renderAnswer(a: Answer): string {
+interface Coverage {
+  zones: number;
+  checked: string; // YYYY-MM-DD
+  running: boolean; // some season's specials are still running
+}
+
+function renderAnswer(a: Answer, cov: Coverage): string {
   const steps = a.steps
     .map(
       (s, i) => `
@@ -56,9 +62,11 @@ function renderAnswer(a: Answer): string {
          .join('')}</ul>
        <p class="small">From the official fare tables. Meals, Tatkal and dynamic pricing are not included.</p>`
     : '';
+  // Say how complete the list is, so a missing special reads as "not listed", not "none".
+  const scope = `From official notices of ${cov.zones} railway zones, checked ${DATE.format(new Date(cov.checked))}. More may run: check IRCTC.`;
   const specials = a.specials.length
     ? `<h3>Special trains this season</h3>
-       <p class="small">${esc(a.season ?? '')}, from official railway notices.</p>
+       <p class="small">${esc(a.season ?? '')}. ${esc(scope)}</p>
        <ul class="specials">${a.specials
          .slice(0, 5)
          .map(
@@ -66,7 +74,9 @@ function renderAnswer(a: Answer): string {
              `<li><strong>${esc(s.n)}</strong> ${esc(s.name)}<span class="small">${esc(s.days.join(', ') || 'Dates in notice')}${s.last ? ` · until ${DATE.format(new Date(s.last))}` : ''} · <a href="${esc(s.source)}" target="_blank" rel="noopener">notice ↗</a></span></li>`,
          )
          .join('')}</ul>`
-    : '';
+    : cov.running
+      ? `<h3>Special trains this season</h3><p class="small">None listed for this route yet. ${esc(scope)}</p>`
+      : '';
   const people = a.people;
   return `
     <h2 id="result-title">${esc(a.title)}</h2>
@@ -149,7 +159,10 @@ export function setupSearch(inputs: Inputs) {
     const date = when.value && when.value >= today() ? when.value : undefined;
     const ans = answer(a, b, { ...loaded, specials: inputs.specials(), today: today(), date });
     current = { answer: ans, from: a, to: b };
-    result.innerHTML = renderAnswer(ans);
+    const listed = inputs.specials();
+    const { zones, checked } = coverage(listed);
+    const running = listed.some((x) => !x.last || x.last >= today());
+    result.innerHTML = renderAnswer(ans, { zones, checked, running });
     result.hidden = false;
     document.body.classList.add('answered'); // the answer lists its own special trains
     $<HTMLButtonElement>('#make-card').addEventListener('click', openCard);

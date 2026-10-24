@@ -105,3 +105,13 @@ export function summary(specials: Special[]) {
     topStates: [...byState.entries()].sort((a, b) => b[1] - a[1]),
   };
 }
+
+/**
+ * How complete the special-train list is: which railway zones' notices it covers and
+ * when they were last checked. Shown next to specials so the list never claims more.
+ */
+export function coverage(specials: Special[]): { zones: number; checked: string } {
+  const zones = new Set(specials.map((s) => new URL(s.source).hostname.split('.')[0]));
+  const checked = specials.map((s) => s.verified).sort().at(-1) ?? '';
+  return { zones: zones.size, checked };
+}

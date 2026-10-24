@@ -7,6 +7,7 @@ import {
   isHomeward,
   type Special,
   type SpecialTrip,
+  coverage,
   specialTrips,
 } from './festival';
 import {
@@ -487,7 +488,9 @@ function showSeason(specials: Special[]) {
   const running = specials.filter((s) => !s.last || s.last >= new Date().toISOString().slice(0, 10));
   if (!running.length) return;
   const homeward = running.filter(isHomeward).length;
-  ui.seasonText.textContent = `${running[0].season}: ${homeward} verified special trains are running from the big cities.`;
+  const { zones, checked } = coverage(specials);
+  const day = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(new Date(checked));
+  ui.seasonText.textContent = `${running[0].season}: ${homeward} verified special trains from the big cities, from ${zones} railway zones' notices (checked ${day}). More may run.`;
   ui.season.hidden = false;
 }
 
